@@ -1,0 +1,144 @@
+{
+	"info": {
+		"_postman_id": "d33620f8-cb6f-451e-94c4-4b7e8c485cee",
+		"name": "toggle",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_uid": "16329992-d33620f8-cb6f-451e-94c4-4b7e8c485cee"
+	},
+	"item": [
+		{
+			"name": "All Flags",
+			"id": "c6210b23-2b32-4a6e-b589-6d2c535c906d",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/flags",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"flags"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Flag By Id",
+			"id": "ee750876-377a-48f3-85ad-93d25f01450a",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/flags/new-login-page",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"flags",
+						"new-login-page"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Flag",
+			"id": "bb7b6df6-638f-4667-b426-0fedf4900021",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\"  : \"new-login-page\",\n    \"value\" : true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/flags",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"flags"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Flag",
+			"id": "2b62eeaa-1483-448a-813e-f61fa2141cf8",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"value\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/flags/new-login-page",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"flags",
+						"new-login-page"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "d4de1aec-c7bf-4016-b5fe-fc564f6eeb45",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "d8565b24-fbe6-4bf7-8529-545db7148290",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "6cf3d8b6-ac96-401b-8c7d-751eba0d2ef4",
+			"key": "baseUrl",
+			"value": "localhost:8080",
+			"type": "string"
+		}
+	]
+}
