@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"github.com/gin-gonic/gin"
@@ -11,12 +12,7 @@ type Flag struct {
     Value bool `json:"value"`
 }
 
-var flags []Flag
-
-type Foo struct {
-    Foo string `json:"foo"`
-    Fizz string `json:"fizz"`
-}
+var flags []Flag = make([]Flag,0)
 
 func main() {
     r := gin.Default()
@@ -26,18 +22,49 @@ func main() {
     })
 
     r.GET("/flags/:flagid", func(c *gin.Context) {
-        // c.JSON(http.StatusOK, flags)
+        var result bool
+        for _,flag := range flags {
+            if flag.Name == c.Params.ByName("flagid") {
+                result = flag.Value
+            }
+        }
+        c.JSON(http.StatusOK, result)
+    })
+
+    r.PUT("/flags/:flagid", func(c *gin.Context) {
+        var body struct{value bool}
+        var found bool
+        c.Bind(&body)
+        for _,flag := range flags {
+            if flag.Name == c.Params.ByName("flagid") {
+                flag.Value = body.value
+                found = true
+            }
+        }
+
+        fmt.Println(flags)
+
+        if !found {
+            c.Status(http.StatusNotFound)
+        }
     })
 
     r.POST("/flags", func(c *gin.Context) {
         var flag Flag
         err := c.BindJSON(&flag)
         if err != nil {
-            log.Println("Error!")
+            log.Println("Error!", err)
             return
         }
+        for _,currentFlag := range flags {
+            if currentFlag.Name == flag.Name {
+                c.Status(http.StatusConflict)
+                return
+            }
+        }
+
         flags = append(flags,flag)
-        c.JSON(http.StatusCreated, flag)
+        c.Status(http.StatusCreated)
     })
 
     r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
