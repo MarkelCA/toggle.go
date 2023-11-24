@@ -14,25 +14,20 @@ func ListFlags(c *gin.Context) {
 }
 
 func FindFlag(c *gin.Context) {
-    var result bool
     for _,flag := range flags.List() {
         if flag.Name == c.Params.ByName("flagid") {
-            result = flag.Value
+            c.JSON(http.StatusOK, flag.Value)
+            return
         }
     }
-    c.JSON(http.StatusOK, result)
+    c.Status(http.StatusNotFound)
 }
 func UpdateFlag(c *gin.Context) {
     var body struct{value bool}
-    var found bool
+    // var found bool
     c.Bind(&body)
-    for _,flag := range flags.List() {
-        if flag.Name == c.Params.ByName("flagid") {
-            flag.Value = body.value
-            found = true
-        }
-    }
-    if !found {
+    name := c.Params.ByName("flagid")
+    if !flags.Exists(name) {
         c.Status(http.StatusNotFound)
     }
 }

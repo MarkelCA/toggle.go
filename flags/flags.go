@@ -18,16 +18,16 @@ func List()[]Flag {
 }
 
 func Create(flag Flag) error {
-    if Exists(flag) {
+    if Exists(flag.Name) {
         return &FlagExistsError{}
     }
     flags = append(flags,flag)
     return nil
 }
 
-func Exists(flag Flag) bool {
+func Exists(name string) bool {
     for _,currentFlag := range flags {
-        if currentFlag.Name == flag.Name {
+        if currentFlag.Name == name {
             return true
         }
     }
