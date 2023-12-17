@@ -32,35 +32,60 @@ func(r RedisRepository) Get(key string) (bool, error) {
 }
 
 func (r RedisRepository) List()([]flags.Flag, error) {
-    x := r.client.Keys(ctx, "*")
-    fmt.Println(x)
-    // r.client.Get("foo")
+    keys,err := r.client.Keys(ctx, "*").Result()
+    if err != nil {
+        return nil,err
+    }
 
-    return nil,nil
+    result := make([]flags.Flag,len(keys))
+
+    for i,key := range keys {
+        val,err := r.Get(key)
+        if err != nil {
+            return nil,err
+        }
+        result[i] = flags.Flag{
+            Name: key,
+            Value: val,
+        }
+    }
+    return result,nil
 }
 
 func (r RedisRepository) Create(flag flags.Flag) error {
-    err := r.client.Set(ctx, "key", "value", 0).Err()
-
+    exists,err := r.Exists(flag.Name)
     if err != nil {
-        panic(err)
+        return err
+    } else if exists {
+        return flags.FlagAlreadyExistsError
+    } 
+
+    err = r.client.Set(ctx, flag.Name, flag.Value, 0).Err()
+    if err != nil {
+        return err
     }
 
     return nil
 }
 
 func (r RedisRepository) Exists(name string) (bool,error) {
-    return false,nil
+    result,err := r.client.Exists(ctx,name).Result()
+    if err != nil {
+        return false,err
+    }
+    return result != 0, nil
 }
 
 func (r RedisRepository) Update(name string, value bool) error {
-    val2, err := r.client.Get(ctx, "key2").Result()
-    if err == redis.Nil {
-        fmt.Println("key2 does not exist")
-    } else if err != nil {
-        panic(err)
-    } else {
-        fmt.Println("key2", val2)
+    exists,err := r.Exists(name)
+    if err != nil {
+        return err
+    } else if !exists {
+        return flags.FlagNotFoundError
+    }
+    err = r.client.Set(ctx,name,value,0).Err()
+    if err != nil {
+        return err
     }
     return nil
 }

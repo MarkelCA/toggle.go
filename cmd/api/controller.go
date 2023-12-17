@@ -22,11 +22,15 @@ func (fc FlagController) ListFlags(c *gin.Context) {
     c.JSON(http.StatusOK, result)
 }
 
-func (fc FlagController) FindFlag(c *gin.Context) {
+func (fc FlagController) GetFlag(c *gin.Context) {
     key := c.Params.ByName("flagid")
     value,err := fc.repository.Get(key)
+
     if err == flags.FlagNotFoundError {
         c.JSON(http.StatusNotFound, nil)
+        return
+    } else if err != nil {
+        c.JSON(http.StatusInternalServerError, nil)
         return
     }
 
@@ -37,8 +41,6 @@ func (fc FlagController) UpdateFlag(c *gin.Context) {
     name := c.Params.ByName("flagid")
     var body struct{Value bool `json:"value"`}
     c.BindJSON(&body)
-
-    log.Println(body,name)
 
     result,_ := fc.repository.Exists(name)
     if !result {
@@ -59,6 +61,7 @@ func (fc FlagController) CreateFlag(c *gin.Context) {
         return
     }
     flagErr := fc.repository.Create(flag)
+
     if flagErr != nil {
         msg := fmt.Sprintf("Error - %s (%s)", flagErr.Error(), flag.Name)
         c.String(http.StatusConflict, msg)
