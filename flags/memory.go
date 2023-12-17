@@ -35,5 +35,11 @@ func (r MemoryRepository) Exists(name string) (bool,error) {
 }
 
 func (r MemoryRepository) Update(name string, value bool) error {
+    for _,currentFlag := range flags {
+        if currentFlag.Name == name {
+            currentFlag.Value = value
+            break
+        }
+    }
     return nil
 }

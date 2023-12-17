@@ -34,14 +34,19 @@ func (fc FlagController) FindFlag(c *gin.Context) {
     c.Status(http.StatusNotFound)
 }
 func (fc FlagController) UpdateFlag(c *gin.Context) {
-    var body struct{value bool}
-    // var found bool
-    c.Bind(&body)
     name := c.Params.ByName("flagid")
+    var body struct{value bool}
+    c.Bind(&body)
+
     result,_ := fc.repository.Exists(name)
     if !result {
         c.Status(http.StatusNotFound)
+        c.JSON(http.StatusNotFound, "Error - Flag not found.")
+        return
     }
+
+    fc.repository.Update(name, body.value)
+    c.Status(http.StatusCreated)
 }
 
 func (fc FlagController) CreateFlag(c *gin.Context) {
