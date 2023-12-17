@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN CGO_ENABLED=0 go build -v -a -installsuffix cgo  -o app *.go
+RUN CGO_ENABLED=0 go build -v -a -installsuffix cgo  -o app cmd/api/*.go
 
 FROM alpine:latest  
 WORKDIR /root/
