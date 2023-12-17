@@ -10,21 +10,21 @@ import (
 
 
 type FlagController struct {
-    repository flags.FlagRepository
+    service flags.FlagService
 }
 
-func NewFlagController(r flags.FlagRepository) FlagController {
+func NewFlagController(r flags.FlagService) FlagController {
     return FlagController{r}
 }
 
 func (fc FlagController) ListFlags(c *gin.Context) {
-    result,_ := fc.repository.List()
+    result,_ := fc.service.List()
     c.JSON(http.StatusOK, result)
 }
 
 func (fc FlagController) GetFlag(c *gin.Context) {
     key := c.Params.ByName("flagid")
-    value,err := fc.repository.Get(key)
+    value,err := fc.service.Get(key)
 
     if err == flags.FlagNotFoundError {
         c.JSON(http.StatusNotFound, nil)
@@ -42,14 +42,14 @@ func (fc FlagController) UpdateFlag(c *gin.Context) {
     var body struct{Value bool `json:"value"`}
     c.BindJSON(&body)
 
-    result,_ := fc.repository.Exists(name)
+    result,_ := fc.service.Exists(name)
     if !result {
         c.Status(http.StatusNotFound)
         c.JSON(http.StatusNotFound, "Error - Flag not found.")
         return
     }
 
-    fc.repository.Update(name, body.Value)
+    fc.service.Update(name, body.Value)
     c.Status(http.StatusCreated)
 }
 
@@ -60,7 +60,7 @@ func (fc FlagController) CreateFlag(c *gin.Context) {
         log.Println("Error!", jsonErr)
         return
     }
-    flagErr := fc.repository.Create(flag)
+    flagErr := fc.service.Create(flag)
 
     if flagErr != nil {
         msg := fmt.Sprintf("Error - %s (%s)", flagErr.Error(), flag.Name)

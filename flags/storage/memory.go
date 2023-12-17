@@ -1,6 +1,10 @@
 package storage
 
-import "github.com/markelca/toggles/flags"
+import (
+	"time"
+
+	"github.com/markelca/toggles/flags"
+)
 
 type MemoryRepository struct {}
 
@@ -10,9 +14,16 @@ func NewMemoryRepository() flags.FlagRepository {
 
 var flagsStorage []flags.Flag = make([]flags.Flag,0)
 
+func(r MemoryRepository) Keys() ([]string, error) {
+    result := make([]string, len(flagsStorage))
+    for i,f := range flagsStorage {
+        result[i] = f.Name
+    }
+    return result,nil
+}
+
 func(r MemoryRepository) Get(key string) (bool, error) {
-    result,_:= r.List()
-    for _,flag := range result {
+    for _,flag := range flagsStorage {
         if flag.Name ==  key {
             return flag.Value,nil
         }
@@ -20,20 +31,16 @@ func(r MemoryRepository) Get(key string) (bool, error) {
     return false,nil
 }
 
-func (r MemoryRepository) List()([]flags.Flag, error) {
-    return flagsStorage,nil
-}
 
-func (r MemoryRepository) Create(flag flags.Flag) error {
-    result,err := r.Exists(flag.Name)
-
-    if err != nil{
-        return err
+func (r MemoryRepository) Set(f flags.Flag, expiration time.Duration) error {
+    for i,currentFlag := range flagsStorage {
+        if currentFlag.Name == f.Name {
+            flagsStorage[i].Value = f.Value
+            return nil
+        }
     }
-    if result {
-        return flags.FlagAlreadyExistsError
-    }
-    flagsStorage = append(flagsStorage,flag)
+    // If it doesn't find it it adds it
+    flagsStorage = append(flagsStorage,f)
     return nil
 }
 
@@ -46,12 +53,3 @@ func (r MemoryRepository) Exists(name string) (bool,error) {
     return false,nil
 }
 
-func (r MemoryRepository) Update(name string, value bool) error {
-    for i := range flagsStorage {
-        if flagsStorage[i].Name == name {
-            flagsStorage[i].Value = value
-            break
-        }
-    }
-    return nil
-}

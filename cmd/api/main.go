@@ -2,9 +2,11 @@ package main
 
 import (
 	"os"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/flags/storage"
-    "strconv"
 )
 
 
@@ -21,7 +23,8 @@ func main() {
 
     // repository := storage.NewMemoryRepository()
     repository := storage.NewRedisRepository(redisHost, port)
-    controller := NewFlagController(repository)
+    service := flags.NewFlagService(repository)
+    controller := NewFlagController(service)
 
     r.GET("/flags", controller.ListFlags)
     r.GET("/flags/:flagid", controller.GetFlag)
