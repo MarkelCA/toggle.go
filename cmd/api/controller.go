@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"github.com/markelca/toggle.go/flags"
+	"github.com/markelca/toggles/flags"
 )
 
 

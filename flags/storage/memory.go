@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/markelca/toggle.go/flags"
+import "github.com/markelca/toggles/flags"
 
 type MemoryRepository struct {}
 

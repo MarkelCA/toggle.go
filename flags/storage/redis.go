@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/markelca/toggle.go/flags"
+	"github.com/markelca/toggles/flags"
 	"github.com/redis/go-redis/v9"
 )
 

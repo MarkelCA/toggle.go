@@ -1,4 +1,4 @@
-module github.com/markelca/toggle.go
+module github.com/markelca/toggles
 
 go 1.21.4
 

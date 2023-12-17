@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"github.com/gin-gonic/gin"
-	"github.com/markelca/toggle.go/flags/storage"
+	"github.com/markelca/toggles/flags/storage"
     "strconv"
 )
 
