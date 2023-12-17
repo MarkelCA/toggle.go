@@ -19,5 +19,5 @@ type FlagRepository interface {
 type FlagError string
 func (e FlagError) Error() string { return string(e) }
 
-const FlagAlreadyExistsError = FlagError("toogles: Flag already exists") // nolint:errname
-const FlagNotFoundError = FlagError("toogles: Flag not found") // nolint:errname
+const FlagAlreadyExistsError = FlagError("toggles: Flag already exists") // nolint:errname
+const FlagNotFoundError = FlagError("toggles: Flag not found") // nolint:errname
