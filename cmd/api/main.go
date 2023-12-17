@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/markelca/toggle.go/flags"
+	"github.com/markelca/toggle.go/flags/storage"
 )
 
 
 func main() {
     r := gin.Default()
 
-    repository := flags.NewMemoryRepository()
+    repository := storage.NewMemoryRepository()
     controller := NewFlagController(repository)
 
     r.GET("/flags", controller.ListFlags)
