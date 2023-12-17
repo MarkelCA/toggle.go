@@ -35,8 +35,10 @@ func (fc FlagController) FindFlag(c *gin.Context) {
 }
 func (fc FlagController) UpdateFlag(c *gin.Context) {
     name := c.Params.ByName("flagid")
-    var body struct{value bool}
-    c.Bind(&body)
+    var body struct{Value bool `json:"value"`}
+    c.BindJSON(&body)
+
+    log.Println(body,name)
 
     result,_ := fc.repository.Exists(name)
     if !result {
@@ -45,7 +47,7 @@ func (fc FlagController) UpdateFlag(c *gin.Context) {
         return
     }
 
-    fc.repository.Update(name, body.value)
+    fc.repository.Update(name, body.Value)
     c.Status(http.StatusCreated)
 }
 
