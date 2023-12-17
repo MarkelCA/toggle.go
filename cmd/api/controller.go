@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/markelca/toggle.go/flags"
 )
@@ -24,15 +23,16 @@ func (fc FlagController) ListFlags(c *gin.Context) {
 }
 
 func (fc FlagController) FindFlag(c *gin.Context) {
-    result,_:= fc.repository.List()
-    for _,flag := range result {
-        if flag.Name == c.Params.ByName("flagid") {
-            c.JSON(http.StatusOK, flag.Value)
-            return
-        }
+    key := c.Params.ByName("flagid")
+    value,err := fc.repository.Get(key)
+    if err == flags.FlagNotFoundError {
+        c.JSON(http.StatusNotFound, nil)
+        return
     }
-    c.Status(http.StatusNotFound)
+
+    c.JSON(http.StatusOK, value)
 }
+
 func (fc FlagController) UpdateFlag(c *gin.Context) {
     name := c.Params.ByName("flagid")
     var body struct{Value bool `json:"value"`}

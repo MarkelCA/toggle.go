@@ -10,6 +10,16 @@ func NewMemoryRepository() flags.FlagRepository {
 
 var flagsStorage []flags.Flag = make([]flags.Flag,0)
 
+func(r MemoryRepository) Get(key string) (bool, error) {
+    result,_:= r.List()
+    for _,flag := range result {
+        if flag.Name ==  key {
+            return flag.Value,nil
+        }
+    }
+    return false,nil
+}
+
 func (r MemoryRepository) List()([]flags.Flag, error) {
     return flagsStorage,nil
 }
@@ -21,7 +31,7 @@ func (r MemoryRepository) Create(flag flags.Flag) error {
         return err
     }
     if result {
-        return &flags.FlagExistsError{}
+        return flags.FlagAlreadyExistsError
     }
     flagsStorage = append(flagsStorage,flag)
     return nil
