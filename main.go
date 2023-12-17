@@ -2,15 +2,19 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/markelca/toggle.go/flags"
 )
 
 
 func main() {
     r := gin.Default()
 
-    r.GET("/flags", ListFlags)
-    r.GET("/flags/:flagid", FindFlag)
-    r.PUT("/flags/:flagid", UpdateFlag)
-    r.POST("/flags", CreateFlag)
-    r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+    repository := flags.NewMemoryRepository()
+    controller := NewFlagController(repository)
+
+    r.GET("/flags", controller.ListFlags)
+    r.GET("/flags/:flagid", controller.FindFlag)
+    r.PUT("/flags/:flagid", controller.UpdateFlag)
+    r.POST("/flags", controller.CreateFlag)
+    r.Run() // listen and serve on localhost:8080 
 }

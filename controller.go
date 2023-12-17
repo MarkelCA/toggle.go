@@ -9,12 +9,21 @@ import (
 	"github.com/markelca/toggle.go/flags"
 )
 
-func ListFlags(c *gin.Context) {
-    c.JSON(http.StatusOK, flags.List())
+
+type FlagController struct {
+    repository flags.FlagRepository
 }
 
-func FindFlag(c *gin.Context) {
-    for _,flag := range flags.List() {
+func NewFlagController(r flags.FlagRepository) FlagController {
+    return FlagController{r}
+}
+
+func (fc FlagController) ListFlags(c *gin.Context) {
+    c.JSON(http.StatusOK, fc.repository.List())
+}
+
+func (fc FlagController) FindFlag(c *gin.Context) {
+    for _,flag := range fc.repository.List() {
         if flag.Name == c.Params.ByName("flagid") {
             c.JSON(http.StatusOK, flag.Value)
             return
@@ -22,24 +31,24 @@ func FindFlag(c *gin.Context) {
     }
     c.Status(http.StatusNotFound)
 }
-func UpdateFlag(c *gin.Context) {
+func (fc FlagController) UpdateFlag(c *gin.Context) {
     var body struct{value bool}
     // var found bool
     c.Bind(&body)
     name := c.Params.ByName("flagid")
-    if !flags.Exists(name) {
+    if !fc.repository.Exists(name) {
         c.Status(http.StatusNotFound)
     }
 }
 
-func CreateFlag(c *gin.Context) {
+func (fc FlagController) CreateFlag(c *gin.Context) {
     var flag flags.Flag
     jsonErr := c.BindJSON(&flag)
     if jsonErr != nil {
         log.Println("Error!", jsonErr)
         return
     }
-    flagErr := flags.Create(flag)
+    flagErr := fc.repository.Create(flag)
     if flagErr != nil {
         msg := fmt.Sprintf("Error - %s (%s)", flagErr.Error(), flag.Name)
         c.String(http.StatusConflict, msg)
