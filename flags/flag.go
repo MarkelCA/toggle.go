@@ -12,7 +12,8 @@ func (e *FlagExistsError) Error() string {
 }
 
 type FlagRepository interface {
-    List() []Flag
+    List() ([]Flag, error)
     Create(f Flag) error
-    Exists(name string) bool
+    Exists(name string) (bool, error)
+    Update(name string, value bool) error
 }

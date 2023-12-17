@@ -19,11 +19,13 @@ func NewFlagController(r flags.FlagRepository) FlagController {
 }
 
 func (fc FlagController) ListFlags(c *gin.Context) {
-    c.JSON(http.StatusOK, fc.repository.List())
+    result,_ := fc.repository.List()
+    c.JSON(http.StatusOK, result)
 }
 
 func (fc FlagController) FindFlag(c *gin.Context) {
-    for _,flag := range fc.repository.List() {
+    result,_:= fc.repository.List()
+    for _,flag := range result {
         if flag.Name == c.Params.ByName("flagid") {
             c.JSON(http.StatusOK, flag.Value)
             return
@@ -36,7 +38,8 @@ func (fc FlagController) UpdateFlag(c *gin.Context) {
     // var found bool
     c.Bind(&body)
     name := c.Params.ByName("flagid")
-    if !fc.repository.Exists(name) {
+    result,_ := fc.repository.Exists(name)
+    if !result {
         c.Status(http.StatusNotFound)
     }
 }
