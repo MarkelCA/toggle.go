@@ -14,7 +14,13 @@ func NewFlagService(r storage.CacheClient) FlagService {
 }
 
 func (s FlagService) Get(key string) (bool,error) {
-    return s.Cache.Get(key)
+    result,err := s.Cache.Get(key)
+    if err == storage.Nil {
+        return false,FlagNotFoundError
+    } else if err != nil{
+        return false,err
+    }
+    return result,nil
 }
 
 func (s FlagService) Create(f Flag) error {

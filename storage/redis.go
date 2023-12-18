@@ -31,8 +31,7 @@ func(r RedisClient) Keys() ([]string, error) {
 func(r RedisClient) Get(key string) (bool, error) {
     val, err := r.client.Get(ctx, key).Bool()
     if err == redis.Nil {
-        // return false,flags.FlagNotFoundError
-        return false,err
+        return false,Nil
     }
     return val,err
 }
