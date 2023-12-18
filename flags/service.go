@@ -1,16 +1,20 @@
 package flags
 
+import (
+    "github.com/markelca/toggles/storage"
+)
+
 
 type FlagService struct {
-    Repository FlagRepository
+    Cache storage.CacheClient
 }
 
-func NewFlagService(r FlagRepository) FlagService {
+func NewFlagService(r storage.CacheClient) FlagService {
     return FlagService{r}
 }
 
 func (s FlagService) Get(key string) (bool,error) {
-    return s.Repository.Get(key)
+    return s.Cache.Get(key)
 }
 
 func (s FlagService) Create(f Flag) error {
@@ -21,7 +25,7 @@ func (s FlagService) Create(f Flag) error {
         return FlagAlreadyExistsError
     } 
 
-    err = s.Repository.Set(f,0)
+    err = s.Cache.Set(f.Name,f.Value,0)
     if err != nil {
         return err
     }
@@ -36,7 +40,7 @@ func (s FlagService) Update(name string, value bool) error {
     } else if !exists {
         return FlagNotFoundError
     }
-    err = s.Repository.Set(Flag{name,value},0)
+    err = s.Cache.Set(name,value,0)
     if err != nil {
         return err
     }
@@ -44,11 +48,11 @@ func (s FlagService) Update(name string, value bool) error {
 }
 
 func (s FlagService) Exists(key string) (bool,error) {
-    return s.Repository.Exists(key)
+    return s.Cache.Exists(key)
 }
  
 func (s FlagService) List()([]Flag, error) {
-    keys,err := s.Repository.Keys()
+    keys,err := s.Cache.Keys()
     if err != nil {
         return nil,err
     }
@@ -56,7 +60,7 @@ func (s FlagService) List()([]Flag, error) {
     result := make([]Flag,len(keys))
 
     for i,key := range keys {
-        val,err := s.Repository.Get(key)
+        val,err := s.Cache.Get(key)
         if err != nil {
             return nil,err
         }

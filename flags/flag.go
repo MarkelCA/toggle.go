@@ -1,18 +1,10 @@
 package flags
 
-import "time"
-
 type Flag struct {
     Name  string `json:"name"`
     Value bool `json:"value"`
 }
 
-type FlagRepository interface {
-    Get(key string) (bool, error)
-    Keys() ([]string, error)
-    Exists(name string) (bool, error)
-    Set(f Flag, expiration time.Duration) error
-}
 
 ////////////
 // Errors
