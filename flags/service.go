@@ -1,7 +1,8 @@
 package flags
 
 import (
-    "github.com/markelca/toggles/storage"
+	"strconv"
+	"github.com/markelca/toggles/storage"
 )
 
 
@@ -14,10 +15,14 @@ func NewFlagService(r storage.CacheClient) FlagService {
 }
 
 func (s FlagService) Get(key string) (bool,error) {
-    result,err := s.Cache.Get(key)
+    cachedResult,err := s.Cache.Get(key) 
     if err == storage.Nil {
         return false,FlagNotFoundError
     } else if err != nil{
+        return false,err
+    }     
+    result,err := strconv.ParseBool(cachedResult)
+    if err != nil {
         return false,err
     }
     return result,nil
@@ -66,7 +71,7 @@ func (s FlagService) List()([]Flag, error) {
     result := make([]Flag,len(keys))
 
     for i,key := range keys {
-        val,err := s.Cache.Get(key)
+        val,err := s.Get(key)
         if err != nil {
             return nil,err
         }

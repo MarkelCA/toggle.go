@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-	// "github.com/markelca/toggles/flags"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,10 +27,10 @@ func(r RedisClient) Keys() ([]string, error) {
     return r.client.Keys(ctx, "*").Result()
 }
 
-func(r RedisClient) Get(key string) (bool, error) {
-    val, err := r.client.Get(ctx, key).Bool()
+func(r RedisClient) Get(key string) (string, error) {
+    val, err := r.client.Get(ctx, key).Result()
     if err == redis.Nil {
-        return false,Nil
+        return "",Nil
     }
     return val,err
 }
