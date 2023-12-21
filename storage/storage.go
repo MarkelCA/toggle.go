@@ -6,7 +6,16 @@ type KeyValueStore interface {
     Get(key string) (string, error)
     Keys() ([]string, error)
     Exists(name string) (bool, error)
+}
+
+type CacheClient interface {
+    KeyValueStore
     Set(key string, value interface{}, expiration time.Duration) error
+}
+
+type KeyValueDBClient interface {
+    KeyValueStore
+    Set(key string, value interface{}) error
 }
 
 ////////////

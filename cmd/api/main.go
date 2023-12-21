@@ -26,6 +26,7 @@ func main() {
     if err != nil {
         panic("Couldn't connect to mongo!")
     }
+    db.Get("aoeu")
     repository := storage.NewRedisClient(redisHost, redisPort)
     service := flags.NewFlagService(repository,db)
     controller := NewFlagController(service)

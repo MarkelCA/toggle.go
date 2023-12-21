@@ -2,7 +2,8 @@ package storage
 
 import (
 	"fmt"
-    "time"
+
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,13 +18,12 @@ type MongoClient struct {
     client *mongo.Client
 }
 
-func NewMongoClient(host string, port int) (KeyValueStore, error) {
+func NewMongoClient(host string, port int) (KeyValueDBClient, error) {
     hostStr := fmt.Sprintf("mongodb://%v:%v",host,port)
     client, err := mongo.Connect(ctx, options.Client().ApplyURI(hostStr))
     if err != nil {
         return nil,err
     }
-    fmt.Printf("mongo connection: %v,%v",client,err)
     return MongoClient{client},nil
 }
 
@@ -32,10 +32,14 @@ func(r MongoClient) Keys() ([]string, error) {
 }
 
 func(r MongoClient) Get(key string) (string, error) {
+    collection := r.client.Database("toggles").Collection("flags")
+    x := collection.FindOne(ctx,bson.D{})
+    y,_ := x.Raw()
+    fmt.Printf("strr -> %v",y.String())
     return "",nil
 }
 
-func (r MongoClient) Set(key string, value interface{}, expiration time.Duration) error {
+func (r MongoClient) Set(key string, value interface{}) error {
     return nil
 }
 

@@ -13,7 +13,7 @@ type RedisClient struct {
     client *redis.Client 
 }
 
-func NewRedisClient(host string, port int) KeyValueStore {
+func NewRedisClient(host string, port int) CacheClient {
     hostStr := fmt.Sprintf("%v:%v",host,port)
     rdb := redis.NewClient(&redis.Options{
         Addr:     hostStr,

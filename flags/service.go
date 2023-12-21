@@ -7,11 +7,11 @@ import (
 
 
 type FlagService struct {
-    CacheClient storage.KeyValueStore
-    DBClient storage.KeyValueStore
+    CacheClient storage.CacheClient
+    DBClient storage.KeyValueDBClient
 }
 
-func NewFlagService(r storage.KeyValueStore, db storage.KeyValueStore) FlagService {
+func NewFlagService(r storage.CacheClient, db storage.KeyValueDBClient) FlagService {
     return FlagService{r,db}
 }
 
