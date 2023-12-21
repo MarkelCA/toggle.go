@@ -18,7 +18,8 @@ type MongoClient struct {
 }
 
 func NewMongoClient(host string, port int) (KeyValueStore, error) {
-    client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27018"))
+    hostStr := fmt.Sprintf("mongodb://%v:%v",host,port)
+    client, err := mongo.Connect(ctx, options.Client().ApplyURI(hostStr))
     if err != nil {
         return nil,err
     }
