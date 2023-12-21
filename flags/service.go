@@ -7,15 +7,16 @@ import (
 
 
 type FlagService struct {
-    Cache storage.CacheClient
+    CacheClient storage.KeyValueStore
+    DBClient storage.KeyValueStore
 }
 
-func NewFlagService(r storage.CacheClient) FlagService {
-    return FlagService{r}
+func NewFlagService(r storage.KeyValueStore, db storage.KeyValueStore) FlagService {
+    return FlagService{r,db}
 }
 
 func (s FlagService) Get(key string) (bool,error) {
-    cachedResult,err := s.Cache.Get(key) 
+    cachedResult,err := s.CacheClient.Get(key) 
     if err == storage.Nil {
         return false,FlagNotFoundError
     } else if err != nil{
@@ -36,7 +37,7 @@ func (s FlagService) Create(f Flag) error {
         return FlagAlreadyExistsError
     } 
 
-    err = s.Cache.Set(f.Name,f.Value,0)
+    err = s.CacheClient.Set(f.Name,f.Value,0)
     if err != nil {
         return err
     }
@@ -51,7 +52,7 @@ func (s FlagService) Update(name string, value bool) error {
     } else if !exists {
         return FlagNotFoundError
     }
-    err = s.Cache.Set(name,value,0)
+    err = s.CacheClient.Set(name,value,0)
     if err != nil {
         return err
     }
@@ -59,11 +60,11 @@ func (s FlagService) Update(name string, value bool) error {
 }
 
 func (s FlagService) Exists(key string) (bool,error) {
-    return s.Cache.Exists(key)
+    return s.CacheClient.Exists(key)
 }
  
 func (s FlagService) List()([]Flag, error) {
-    keys,err := s.Cache.Keys()
+    keys,err := s.CacheClient.Keys()
     if err != nil {
         return nil,err
     }

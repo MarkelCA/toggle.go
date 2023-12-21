@@ -10,21 +10,27 @@ import (
 
 
 func main() {
-    redisHost := os.Getenv("REDIS_HOST")
-    redisPort := os.Getenv("REDIS_PORT")
+    redisHost    := os.Getenv("REDIS_HOST")
+    redisPortStr := os.Getenv("REDIS_PORT")
+    mongoHost    := os.Getenv("MONGO_HOST")
+    mongoPortStr := os.Getenv("MONGO_PORT")
 
-     port, err := strconv.Atoi(redisPort)
-     if err != nil {
+     redisPort, err  := strconv.Atoi(redisPortStr)
+     mongoPort, err2 := strconv.Atoi(mongoPortStr)
+     if err != nil || err2 != nil{
          panic(err)
      }
 
-    r := gin.Default()
-
     // repository := storage.NewMemoryRepository()
-    repository := storage.NewRedisClient(redisHost, port)
-    service := flags.NewFlagService(repository)
+    db,err := storage.NewMongoClient(mongoHost,mongoPort)
+    if err != nil {
+        panic("Couldn't connect to mongo!")
+    }
+    repository := storage.NewRedisClient(redisHost, redisPort)
+    service := flags.NewFlagService(repository,db)
     controller := NewFlagController(service)
 
+    r := gin.Default()
     r.GET("/flags", controller.ListFlags)
     r.GET("/flags/:flagid", controller.GetFlag)
     r.PUT("/flags/:flagid", controller.UpdateFlag)

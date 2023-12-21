@@ -20,3 +20,16 @@ curl localhost:8080/flags/new-login-page -v
 # Update flag
 curl localhost:8080/flags/new-login-page -X PUT --data '{"value":false}'
 ```
+# Database
+Test commands, just for the record
+## Redis
+
+## Mongo
+Test commands
+```bash
+mongosh --port 27018
+show dbs
+use toggles
+db.flags.insert({"name":"new-login-page","value":true})
+db.flags.findOne({"name":"new-login-page"}).value
+```

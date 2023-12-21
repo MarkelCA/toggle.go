@@ -9,7 +9,7 @@ import (
 
 type MemoryRepository struct {}
 
-func NewMemoryRepository() CacheClient {
+func NewMemoryRepository() KeyValueStore {
     return MemoryRepository{}
 }
 

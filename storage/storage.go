@@ -2,7 +2,7 @@ package storage
 
 import "time"
 
-type CacheClient interface {
+type KeyValueStore interface {
     Get(key string) (string, error)
     Keys() ([]string, error)
     Exists(name string) (bool, error)
