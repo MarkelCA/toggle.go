@@ -18,22 +18,18 @@ func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) 
 }
 
 func (s FlagService) Get(key string) (bool,error) {
-    // x,err := db.Get("new-login-pagee")
-    // if err == flags.FlagNotFoundError {
-    //     log.Printf("la puta vida")
-    // }
-    // log.Printf("looog: %v -> %v",x,err)
-
+    expiration := time.Minute * 5
     cachedResult,err := s.CacheClient.Get(key) 
     if err == nil {
         // We update the TTL on every successfull key access
-        expiration := time.Minute * 5
         err = s.CacheClient.Expire(key,expiration)
         if err != nil {
             return false,nil
         }
     } else if err == storage.Nil {
-        return false,FlagNotFoundError
+        value,err := s.Repository.Get(key)
+        s.CacheClient.Set(key,value,expiration)
+        return value,err
     } else if err != nil{
         return false,err
     }
