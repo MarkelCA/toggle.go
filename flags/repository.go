@@ -18,6 +18,7 @@ type FlagRepository interface {
     Keys() ([]string, error)
     Exists(name string) (bool, error)
     Set(key string, value interface{}) error
+    List() ([]Flag, error)
 }
 
 type FlagMongoRepository struct {
@@ -34,12 +35,33 @@ func NewFlagMongoRepository(host string, port int) (FlagRepository, error) {
     return FlagMongoRepository{collection},nil
 }
 
-func(r FlagMongoRepository) Keys() ([]string, error) {
+func (repository FlagMongoRepository) List() ([]Flag, error) {
+    cur,err := repository.collection.Find(ctx,bson.D{})
+    if err != nil { 
+        return nil,err
+    }
+    defer cur.Close(ctx)
+    result := make([]Flag,0)
+    for cur.Next(ctx) {
+        var flag Flag
+        err := cur.Decode(&flag)
+        if err != nil { 
+            return nil,err
+        }
+        result = append(result,flag)
+    }
+    if err := cur.Err(); err != nil {
+        return nil,err
+    }
+    return result,nil
+}
+
+func(repository FlagMongoRepository) Keys() ([]string, error) {
     return nil,nil
 }
 
-func(r FlagMongoRepository) Get(key string) (bool, error) {
-    x := r.collection.FindOne(ctx,bson.D{{Key:"name",Value:key}})
+func(repository FlagMongoRepository) Get(key string) (bool, error) {
+    x := repository.collection.FindOne(ctx,bson.D{{Key:"name",Value:key}})
     var f Flag
     err := x.Decode(&f)
     if err == mongo.ErrNoDocuments {
@@ -50,11 +72,11 @@ func(r FlagMongoRepository) Get(key string) (bool, error) {
     return f.Value,nil
 }
 
-func (r FlagMongoRepository) Set(key string, value interface{}) error {
+func (repository FlagMongoRepository) Set(key string, value interface{}) error {
     filter := bson.D{{"name",key}}
     update := bson.D{{"$set", bson.D{{"value",value}}}}
     opts := options.Update().SetUpsert(true)
-    _, err := r.collection.UpdateOne(context.TODO(), filter, update, opts)
+    _, err := repository.collection.UpdateOne(context.TODO(), filter, update, opts)
 
     if err != nil {
         return err
@@ -63,8 +85,8 @@ func (r FlagMongoRepository) Set(key string, value interface{}) error {
     }
 }
 
-func (r FlagMongoRepository) Exists(name string) (bool,error) {
-    _,err := r.Get(name)
+func (repository FlagMongoRepository) Exists(name string) (bool,error) {
+    _,err := repository.Get(name)
     log.Printf("aaaa ver: %v",err)
     if err == nil {
         return true,nil

@@ -18,7 +18,11 @@ func NewFlagController(r flags.FlagService) FlagController {
 }
 
 func (fc FlagController) ListFlags(c *gin.Context) {
-    result,_ := fc.service.List()
+    result,err := fc.service.List()
+    if err != nil {
+        c.Status(http.StatusInternalServerError)
+        return
+    }
     c.JSON(http.StatusOK, result)
 }
 
@@ -42,7 +46,11 @@ func (fc FlagController) UpdateFlag(c *gin.Context) {
     var body struct{Value bool `json:"value"`}
     c.BindJSON(&body)
 
-    result,_ := fc.service.Exists(name)
+    result,err := fc.service.Exists(name)
+    if err != nil {
+        c.Status(http.StatusInternalServerError)
+        return
+    }
     if !result {
         c.Status(http.StatusNotFound)
         c.JSON(http.StatusNotFound, "Error - Flag not found.")

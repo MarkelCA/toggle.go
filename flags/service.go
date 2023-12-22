@@ -3,33 +3,32 @@ package flags
 import (
 	"strconv"
 	"time"
-
 	"github.com/markelca/toggles/storage"
 )
 
 
 type FlagService struct {
-    Repository FlagRepository
-    CacheClient storage.CacheClient
+    repository FlagRepository
+    cacheClient storage.CacheClient
 }
 
 func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) FlagService {
     return FlagService{repository, cacheClient}
 }
 
-func (s FlagService) Get(key string) (bool,error) {
+func (flagService FlagService) Get(key string) (bool,error) {
     expiration := time.Minute * 5
-    cachedResult,err := s.CacheClient.Get(key) 
+    cachedResult,err := flagService.cacheClient.Get(key) 
     if err == nil {
         // We update the TTL on every successfull key access
-        err = s.CacheClient.Expire(key,expiration)
+        err = flagService.cacheClient.Expire(key,expiration)
         if err != nil {
             return false,nil
         }
     } else if err == storage.Nil {
-        value,err := s.Repository.Get(key)
+        value,err := flagService.repository.Get(key)
         if err == nil {
-            s.CacheClient.Set(key,value,expiration)
+            flagService.cacheClient.Set(key,value,expiration)
         }
         return value,err
     } else if err != nil{
@@ -43,15 +42,15 @@ func (s FlagService) Get(key string) (bool,error) {
     return result,nil
 }
 
-func (s FlagService) Create(f Flag) error {
-    exists,err := s.Exists(f.Name)
+func (flagService FlagService) Create(f Flag) error {
+    exists,err := flagService.Exists(f.Name)
     if err != nil {
         return err
     } else if exists {
         return FlagAlreadyExistsError
     } 
 
-    err = s.Repository.Set(f.Name,f.Value)
+    err = flagService.repository.Set(f.Name,f.Value)
     if err != nil {
         return err
     }
@@ -59,44 +58,34 @@ func (s FlagService) Create(f Flag) error {
     return nil
 }
 
-func (s FlagService) Update(name string, value bool) error {
-    exists,err := s.Exists(name)
+func (flagService FlagService) Update(name string, value bool) error {
+    exists,err := flagService.Exists(name)
     if err != nil {
         return err
     } else if !exists {
         return FlagNotFoundError
     }
-    err = s.Repository.Set(name,value)
+    err = flagService.repository.Set(name,value)
     if err != nil {
         return err
     } else {
-        err = s.CacheClient.Delete(name)
+        err = flagService.cacheClient.Delete(name)
         return err
     }
 }
 
-func (s FlagService) Exists(key string) (bool,error) {
-    return s.Repository.Exists(key)
+func (flagService FlagService) Exists(key string) (bool,error) {
+    return flagService.repository.Exists(key)
 }
  
-func (s FlagService) List()([]Flag, error) {
-    keys,err := s.CacheClient.Keys()
+func (flagService FlagService) List()([]Flag, error) {
+    flags,err := flagService.repository.List()
     if err != nil {
         return nil,err
     }
-
-    result := make([]Flag,len(keys))
-
-    for i,key := range keys {
-        val,err := s.Get(key)
-        if err != nil {
-            return nil,err
-        }
-        result[i] = Flag{
-            Name: key,
-            Value: val,
-        }
+    if err != nil {
+        return nil,err
     }
-    return result,nil
+    return flags,nil
 }
 
