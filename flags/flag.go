@@ -12,5 +12,5 @@ type Flag struct {
 type FlagError string
 func (e FlagError) Error() string { return string(e) }
 
-const FlagAlreadyExistsError = FlagError("toggles: Flag already exists") // nolint:errname
-const FlagNotFoundError = FlagError("toggles: Flag not found") // nolint:errname
+const ErrFlagAlreadyExists = FlagError("toggles: Flag already exists") // nolint:errname
+const ErrFlagNotFound = FlagError("toggles: Flag not found") // nolint:errname

@@ -6,6 +6,7 @@ import (
 	"github.com/markelca/toggles/storage"
 )
 
+const DEFAULT_EXPIRATION_TIME = 5 * time.Minute
 
 type FlagService struct {
     repository FlagRepository
@@ -17,18 +18,17 @@ func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) 
 }
 
 func (flagService FlagService) Get(key string) (bool,error) {
-    expiration := time.Minute * 5
     cachedResult,err := flagService.cacheClient.Get(key) 
     if err == nil {
         // We update the TTL on every successfull key access
-        err = flagService.cacheClient.Expire(key,expiration)
+        err = flagService.cacheClient.Expire(key,DEFAULT_EXPIRATION_TIME)
         if err != nil {
             return false,nil
         }
     } else if err == storage.Nil {
         value,err := flagService.repository.Get(key)
         if err == nil {
-            flagService.cacheClient.Set(key,value,expiration)
+            flagService.cacheClient.Set(key,value,DEFAULT_EXPIRATION_TIME)
         }
         return value,err
     } else if err != nil{
@@ -47,7 +47,7 @@ func (flagService FlagService) Create(f Flag) error {
     if err != nil {
         return err
     } else if exists {
-        return FlagAlreadyExistsError
+        return ErrFlagAlreadyExists
     } 
 
     err = flagService.repository.Set(f.Name,f.Value)
@@ -63,7 +63,7 @@ func (flagService FlagService) Update(name string, value bool) error {
     if err != nil {
         return err
     } else if !exists {
-        return FlagNotFoundError
+        return ErrFlagNotFound
     }
     err = flagService.repository.Set(name,value)
     if err != nil {
@@ -80,9 +80,6 @@ func (flagService FlagService) Exists(key string) (bool,error) {
  
 func (flagService FlagService) List()([]Flag, error) {
     flags,err := flagService.repository.List()
-    if err != nil {
-        return nil,err
-    }
     if err != nil {
         return nil,err
     }

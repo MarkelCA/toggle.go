@@ -30,7 +30,7 @@ func (fc FlagController) GetFlag(c *gin.Context) {
     key := c.Params.ByName("flagid")
     value,err := fc.service.Get(key)
 
-    if err == flags.FlagNotFoundError {
+    if err == flags.ErrFlagNotFound {
         c.JSON(http.StatusNotFound, nil)
         return
     } else if err != nil {

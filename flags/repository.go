@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,7 +14,6 @@ var ctx = context.Background()
 
 type FlagRepository interface {
     Get(key string) (bool, error)
-    Keys() ([]string, error)
     Exists(name string) (bool, error)
     Set(key string, value interface{}) error
     List() ([]Flag, error)
@@ -56,16 +54,12 @@ func (repository FlagMongoRepository) List() ([]Flag, error) {
     return result,nil
 }
 
-func(repository FlagMongoRepository) Keys() ([]string, error) {
-    return nil,nil
-}
-
 func(repository FlagMongoRepository) Get(key string) (bool, error) {
     x := repository.collection.FindOne(ctx,bson.D{{Key:"name",Value:key}})
     var f Flag
     err := x.Decode(&f)
     if err == mongo.ErrNoDocuments {
-        return false,FlagNotFoundError
+        return false,ErrFlagNotFound
     } else if err != nil {
         return false,err
     }
@@ -90,7 +84,7 @@ func (repository FlagMongoRepository) Exists(name string) (bool,error) {
     log.Printf("aaaa ver: %v",err)
     if err == nil {
         return true,nil
-    } else if err == FlagNotFoundError {
+    } else if err == ErrFlagNotFound {
         return false,nil
     } else {
         return false,err
