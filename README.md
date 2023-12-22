@@ -3,7 +3,8 @@ Minimalistic feature flags sofware made in go.
 
 # Install
 ```bash
-docker compose up
+cp .env.sample .env # Modify the parameters if you want
+docker compose up --build
 ```
 
 # Examples

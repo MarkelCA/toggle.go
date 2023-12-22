@@ -3,10 +3,14 @@ services:
   app:
     image: go-server
     container_name: go-server
-    build: .
+    build:
+      context: .
+      args:
+        APP: ${APP}
     ports:
-      - "8080:8080"
+      - "${APP_PORT}:${APP_PORT}"
     environment:
+      - APP_PORT=${APP_PORT}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - MONGO_HOST=mongo

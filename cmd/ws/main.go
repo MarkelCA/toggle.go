@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/storage"
 )
 
+var clients = make(map[*websocket.Conn]bool)
+var broadcast = make(chan interface{})
+var upgrader = websocket.Upgrader{
+    CheckOrigin: customUpgrader,
+}
 
 func main() {
     appPort      := os.Getenv("APP_PORT")
@@ -32,13 +36,9 @@ func main() {
 
     repository := storage.NewRedisClient(redisHost, redisPort)
     service := flags.NewFlagService(repository,db)
-    controller := NewFlagController(service)
 
-    r := gin.Default()
-    r.GET("/flags", controller.ListFlags)
-    r.GET("/flags/:flagid", controller.GetFlag)
-    r.PUT("/flags/:flagid", controller.UpdateFlag)
-    r.POST("/flags", controller.CreateFlag)
-    host := fmt.Sprintf(":%v",appPort)
-    r.Run(host)
+    fmt.Println(repository,service)
+
+    host := fmt.Sprintf(":%v", appPort)
+    InitWS(host)
 }
