@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
-	"github.com/markelca/toggles/storage"
 	"github.com/markelca/toggles/flags"
+	"github.com/markelca/toggles/storage"
 )
 
 
@@ -22,11 +23,11 @@ func main() {
      }
 
     // repository := storage.NewMemoryRepository()
-    db,err := storage.NewMongoClient(mongoHost,mongoPort)
+    db,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
     if err != nil {
         panic("Couldn't connect to mongo!")
     }
-    db.Get("aoeu")
+
     repository := storage.NewRedisClient(redisHost, redisPort)
     service := flags.NewFlagService(repository,db)
     controller := NewFlagController(service)

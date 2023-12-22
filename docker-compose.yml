@@ -17,10 +17,10 @@ services:
   redis:
     image: redis:7.2.3-alpine
     ports:
-      - "6379"
+      - "6380:6379"
   mongo:
     image: mongo:5.0.23
     container_name: mongo
     ports:
-      - "27017"
+      - "27018:27017"
 

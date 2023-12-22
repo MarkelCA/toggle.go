@@ -2,26 +2,42 @@ package flags
 
 import (
 	"strconv"
+	"time"
+
 	"github.com/markelca/toggles/storage"
 )
 
 
 type FlagService struct {
+    Repository FlagRepository
     CacheClient storage.CacheClient
-    DBClient storage.KeyValueDBClient
 }
 
-func NewFlagService(r storage.CacheClient, db storage.KeyValueDBClient) FlagService {
-    return FlagService{r,db}
+func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) FlagService {
+    return FlagService{repository, cacheClient}
 }
 
 func (s FlagService) Get(key string) (bool,error) {
+    // x,err := db.Get("new-login-pagee")
+    // if err == flags.FlagNotFoundError {
+    //     log.Printf("la puta vida")
+    // }
+    // log.Printf("looog: %v -> %v",x,err)
+
     cachedResult,err := s.CacheClient.Get(key) 
-    if err == storage.Nil {
+    if err == nil {
+        // We update the TTL on every successfull key access
+        expiration := time.Minute * 5
+        err = s.CacheClient.Expire(key,expiration)
+        if err != nil {
+            return false,nil
+        }
+    } else if err == storage.Nil {
         return false,FlagNotFoundError
     } else if err != nil{
         return false,err
-    }     
+    }
+
     result,err := strconv.ParseBool(cachedResult)
     if err != nil {
         return false,err
@@ -37,7 +53,8 @@ func (s FlagService) Create(f Flag) error {
         return FlagAlreadyExistsError
     } 
 
-    err = s.CacheClient.Set(f.Name,f.Value,0)
+    expiration := time.Minute * 5
+    err = s.CacheClient.Set(f.Name,f.Value,expiration)
     if err != nil {
         return err
     }
@@ -52,7 +69,8 @@ func (s FlagService) Update(name string, value bool) error {
     } else if !exists {
         return FlagNotFoundError
     }
-    err = s.CacheClient.Set(name,value,0)
+    expiration := time.Minute * 5
+    err = s.CacheClient.Set(name,value,expiration)
     if err != nil {
         return err
     }

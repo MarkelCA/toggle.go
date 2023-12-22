@@ -11,6 +11,7 @@ type KeyValueStore interface {
 type CacheClient interface {
     KeyValueStore
     Set(key string, value interface{}, expiration time.Duration) error
+    Expire(key string, expiration time.Duration) error
 }
 
 type KeyValueDBClient interface {

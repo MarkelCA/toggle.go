@@ -29,10 +29,15 @@ func(r RedisClient) Keys() ([]string, error) {
 
 func(r RedisClient) Get(key string) (string, error) {
     val, err := r.client.Get(ctx, key).Result()
+    
     if err == redis.Nil {
         return "",Nil
     }
     return val,err
+}
+
+func (r RedisClient) Expire(key string, expiration time.Duration) error {
+    return r.client.Expire(ctx,key,expiration).Err()
 }
 
 func (r RedisClient) Set(key string, value interface{}, expiration time.Duration) error {
