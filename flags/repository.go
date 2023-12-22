@@ -2,9 +2,11 @@ package flags
 
 import (
 	"context"
-    "fmt"
-	"go.mongodb.org/mongo-driver/mongo"
+	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -62,5 +64,13 @@ func (r FlagMongoRepository) Set(key string, value interface{}) error {
 }
 
 func (r FlagMongoRepository) Exists(name string) (bool,error) {
-    return false,nil
+    _,err := r.Get(name)
+    log.Printf("aaaa ver: %v",err)
+    if err == nil {
+        return true,nil
+    } else if err == FlagNotFoundError {
+        return false,nil
+    } else {
+        return false,err
+    }
 }

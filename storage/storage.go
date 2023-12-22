@@ -4,6 +4,7 @@ import "time"
 
 type KeyValueStore interface {
     Get(key string) (string, error)
+    Delete(key string) error
     Keys() ([]string, error)
     Exists(name string) (bool, error)
 }

@@ -23,6 +23,11 @@ func NewRedisClient(host string, port int) CacheClient {
     return RedisClient{rdb}
 }
 
+func (r RedisClient) Delete(key string) error {
+    return r.client.Del(ctx,key).Err()
+}
+
+
 func(r RedisClient) Keys() ([]string, error) {
     return r.client.Keys(ctx, "*").Result()
 }

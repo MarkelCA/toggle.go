@@ -66,16 +66,17 @@ func (s FlagService) Update(name string, value bool) error {
     } else if !exists {
         return FlagNotFoundError
     }
-    expiration := time.Minute * 5
-    err = s.CacheClient.Set(name,value,expiration)
+    err = s.Repository.Set(name,value)
     if err != nil {
         return err
+    } else {
+        err = s.CacheClient.Delete(name)
+        return err
     }
-    return nil
 }
 
 func (s FlagService) Exists(key string) (bool,error) {
-    return s.CacheClient.Exists(key)
+    return s.Repository.Exists(key)
 }
  
 func (s FlagService) List()([]Flag, error) {
