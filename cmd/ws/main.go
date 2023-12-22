@@ -4,16 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/storage"
 )
-
-var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan interface{})
-var upgrader = websocket.Upgrader{
-    CheckOrigin: customUpgrader,
-}
 
 func main() {
     appPort      := os.Getenv("APP_PORT")
@@ -28,7 +21,6 @@ func main() {
          panic(err)
      }
 
-    // repository := storage.NewMemoryRepository()
     db,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
     if err != nil {
         panic("Couldn't connect to mongo!")
@@ -37,8 +29,8 @@ func main() {
     repository := storage.NewRedisClient(redisHost, redisPort)
     service := flags.NewFlagService(repository,db)
 
-    fmt.Println(repository,service)
+    controller := WSController{service}
 
     host := fmt.Sprintf(":%v", appPort)
-    InitWS(host)
+    controller.Init(host)
 }
