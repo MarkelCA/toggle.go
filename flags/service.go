@@ -28,7 +28,9 @@ func (s FlagService) Get(key string) (bool,error) {
         }
     } else if err == storage.Nil {
         value,err := s.Repository.Get(key)
-        s.CacheClient.Set(key,value,expiration)
+        if err == nil {
+            s.CacheClient.Set(key,value,expiration)
+        }
         return value,err
     } else if err != nil{
         return false,err
@@ -49,8 +51,7 @@ func (s FlagService) Create(f Flag) error {
         return FlagAlreadyExistsError
     } 
 
-    expiration := time.Minute * 5
-    err = s.CacheClient.Set(f.Name,f.Value,expiration)
+    err = s.Repository.Set(f.Name,f.Value)
     if err != nil {
         return err
     }

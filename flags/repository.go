@@ -49,7 +49,16 @@ func(r FlagMongoRepository) Get(key string) (bool, error) {
 }
 
 func (r FlagMongoRepository) Set(key string, value interface{}) error {
-    return nil
+    filter := bson.D{{"name",key}}
+    update := bson.D{{"$set", bson.D{{"value",value}}}}
+    opts := options.Update().SetUpsert(true)
+    _, err := r.collection.UpdateOne(context.TODO(), filter, update, opts)
+
+    if err != nil {
+        return err
+    } else {
+        return nil
+    }
 }
 
 func (r FlagMongoRepository) Exists(name string) (bool,error) {
