@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,23 +29,40 @@ type Command struct {
     emmiter *websocket.Conn
 }
 
-func (c *Command) Run(flagService flags.FlagService) (string,error) {
+type Status int
+
+const (
+	StatusSuccess Status = 200
+	StatusInternalServerError Status = 500
+    StatusBadRequest Status = 400
+    StatusNotFound Status = 404
+)
+
+type Response struct {
+    Status Status `json:"status"`
+    Value interface{} `json:"value"`
+}
+
+func (c *Command) Run(flagService flags.FlagService) Response {
     switch c.Command {
         case "get":
             key := c.Data.(string)
             value,err := flagService.Get(key)
             if err != nil {
-                return "",err
+                return Response{StatusInternalServerError,err}
             }
-            return strconv.FormatBool(value),nil
+            result := strconv.FormatBool(value)
+            return Response{StatusSuccess,result}
         case "create":
+            return Response{StatusInternalServerError,"The create command it's not implemented yet"}
         case "update":
+            return Response{StatusInternalServerError,"The update command it's not implemented yet"}
         case "list":
+            return Response{StatusInternalServerError,"The list command it's not implemented yet"}
         default:
-            return "wrong!",nil
-            
+            msg := fmt.Sprintf("Invalid command (%v)",c.Command) 
+            return Response{StatusBadRequest,msg}
     }
-    return "wrong2!",nil
 }
 
 type WSController struct {
@@ -87,14 +105,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func handleMessages(flagService flags.FlagService) {
     for {
-        var response interface{}
         cmd := <-broadcast
-        cmdResponse,err := cmd.Run(flagService)
-        if err != nil {
-            response = err
-        } else {
-            response = cmdResponse
-        }
+        response := cmd.Run(flagService)
 
         if cmd.broadcast {
             log.Println("(Broadcasted)")
