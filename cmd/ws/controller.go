@@ -24,9 +24,11 @@ var customUpgrader = func(r *http.Request) bool {
 type Command struct {
     Command string `json:"command"`
     Data interface{} `json:"data"`
+    broadcast bool
+    emmiter *websocket.Conn
 }
 
-func (c Command) Run(flagService flags.FlagService) (string,error) {
+func (c *Command) Run(flagService flags.FlagService) (string,error) {
     switch c.Command {
         case "get":
             key := c.Data.(string)
@@ -70,6 +72,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
     for {
         var cmd Command
         err := conn.ReadJSON(&cmd)
+        cmd.emmiter = conn
         // cmd.Time = JSONTime(time.Now())
         log.Printf("debug: %v", cmd)
         log.Printf("Message received: %v", cmd)
@@ -84,14 +87,32 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func handleMessages(flagService flags.FlagService) {
     for {
+        var response interface{}
         cmd := <-broadcast
-        for conn := range clients {
-            response,_ := cmd.Run(flagService)
-            err := conn.WriteJSON(response)
+        cmdResponse,err := cmd.Run(flagService)
+        if err != nil {
+            response = err
+        } else {
+            response = cmdResponse
+        }
+
+        if cmd.broadcast {
+            log.Println("(Broadcasted)")
+            for conn := range clients {
+                err := conn.WriteJSON(response)
+                if err != nil {
+                    log.Println("Error writing message:", err)
+                    conn.Close()
+                    delete(clients, conn)
+                }
+            }
+        } else {
+            log.Println("(NOT Broadcasted)")
+            err := cmd.emmiter.WriteJSON(response)
             if err != nil {
                 log.Println("Error writing message:", err)
-                conn.Close()
-                delete(clients, conn)
+                cmd.emmiter.Close()
+                delete(clients, cmd.emmiter)
             }
         }
     }

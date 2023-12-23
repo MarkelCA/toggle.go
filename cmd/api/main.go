@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
 	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/storage"
 )
@@ -33,12 +31,6 @@ func main() {
     repository := storage.NewRedisClient(redisHost, redisPort)
     service := flags.NewFlagService(repository,db)
     controller := NewFlagController(service)
-
-    r := gin.Default()
-    r.GET("/flags", controller.ListFlags)
-    r.GET("/flags/:flagid", controller.GetFlag)
-    r.PUT("/flags/:flagid", controller.UpdateFlag)
-    r.POST("/flags", controller.CreateFlag)
     host := fmt.Sprintf(":%v",appPort)
-    r.Run(host)
+    controller.Init(host)
 }
