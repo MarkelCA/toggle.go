@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
 )
@@ -21,6 +21,18 @@ var customUpgrader = func(r *http.Request) bool {
     return true
 }
 
+type WSController struct {
+    flagService flags.FlagService
+}
+
+func (ws WSController) Init(host string) {
+    http.HandleFunc("/", handleWebSocket)
+    go handleMessages(ws)
+    log.Printf("Starting server on %v...",host)
+    log.Fatal(http.ListenAndServe(host, nil))
+}
+
+
 type Command struct {
     Command string `json:"command"`
     Data interface{} `json:"data"`
@@ -32,9 +44,13 @@ type Status int
 
 const (
 	StatusSuccess Status = 200
+	StatusCreated Status = 201
+
 	StatusInternalServerError Status = 500
-    StatusBadRequest Status = 400
-    StatusNotFound Status = 404
+
+    StatusBadRequest    Status = 400
+    StatusNotFound      Status = 404
+	StatusConflict      Status = 409
 )
 
 type Response struct {
@@ -42,41 +58,80 @@ type Response struct {
     Value interface{} `json:"value"`
 }
 
-func (c *Command) Run(flagService flags.FlagService) Response {
-    switch c.Command {
+func (ws WSController) Update(cmd *Command) Response {
+    flag,err := ParseFlag(cmd.Data)
+    if err != nil {
+        return Response{StatusInternalServerError,err}
+    }
+    err = ws.flagService.Update(flag.Name,flag.Value)
+    if err != nil {
+        if err == flags.ErrFlagNotFound {
+            return Response{StatusNotFound,err}
+        }
+        return Response{StatusInternalServerError, err}
+    }
+
+    return Response{StatusCreated,nil}
+}
+
+func (cmd *Command) Run(ws WSController) Response {
+    switch cmd.Command {
         case "get":
-            key := c.Data.(string)
-            value,err := flagService.Get(key)
-            if err != nil {
-                return Response{StatusInternalServerError,err}
-            }
-            result := strconv.FormatBool(value)
-            return Response{StatusSuccess,result}
+            return ws.Get(cmd)
         case "create":
-            return Response{StatusInternalServerError,"The create command it's not implemented yet"}
+            return ws.Create(cmd)
         case "update":
-            return Response{StatusInternalServerError,"The update command it's not implemented yet"}
-        case "list":
-            flags,err := flagService.List()
-            if err != nil {
-                return Response{StatusInternalServerError,err}
-            }             
-            return Response{StatusSuccess,flags}
+            return ws.Update(cmd)
         default:
-            msg := fmt.Sprintf("Invalid command (%v)",c.Command) 
+            msg := fmt.Sprintf("Invalid command (%v)",cmd.Command) 
             return Response{StatusBadRequest,msg}
     }
 }
 
-type WSController struct {
-    flagService flags.FlagService
+func (ws WSController) Get(c *Command) Response {
+        if c.Data == nil {
+            flags,err := ws.flagService.List()
+            if err != nil {
+                return Response{StatusInternalServerError,err}
+            }             
+            return Response{StatusSuccess,flags}
+        }
+        key := c.Data.(string)
+        value,err := ws.flagService.Get(key)
+        if err != nil {
+            if err == flags.ErrFlagNotFound{
+                return Response{StatusNotFound,err}
+            }
+            return Response{StatusInternalServerError,err}
+        }
+        return Response{StatusSuccess,value}
 }
 
-func (ws WSController) Init(host string) {
-    http.HandleFunc("/", handleWebSocket)
-    go handleMessages(ws.flagService)
-    log.Printf("Starting server on %v...",host)
-    log.Fatal(http.ListenAndServe(host, nil))
+func ParseFlag(data interface{}) (*flags.Flag,error) {
+    jsonBody,err := json.Marshal(data)
+    if err != nil {
+        return nil,err
+    }
+    var flag flags.Flag
+    if err = json.Unmarshal(jsonBody, &flag); err != nil {
+        return nil,err
+    }
+    return &flag,nil
+}
+
+func (ws WSController) Create(cmd *Command) Response {
+    flag,err := ParseFlag(cmd.Data)
+    if err != nil {
+        return Response{StatusInternalServerError,err}
+    }
+    err = ws.flagService.Create(*flag)
+    if err != nil {
+        if err == flags.ErrFlagAlreadyExists {
+            return Response{StatusConflict,err}
+        }
+        return Response{StatusInternalServerError,err}
+    }
+    return Response{StatusCreated,flag}
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -106,10 +161,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func handleMessages(flagService flags.FlagService) {
+func handleMessages(ws WSController) {
     for {
         cmd := <-broadcast
-        response := cmd.Run(flagService)
+        response := cmd.Run(ws)
 
         if cmd.broadcast {
             log.Println("(Broadcasted)")
