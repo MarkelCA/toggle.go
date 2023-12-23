@@ -1,36 +1,21 @@
 # toggles
-Minimalistic feature flags sofware made in go.
+Toggles it's a feature flags application made in Go. It uses mongodb as disk storage and redis for flag value's cache management. Counts with implementations as a REST API and as a Websocket server. There's also plans to build SDKs soon.
+
+# Configure
+In this step you'll be able to configure the port where the service will run (`APP_PORT`) and the desired implementation (`APP`). The `APP` value should be a folder from `cmd`. Currently there's two options: `api` (rest api) and `ws` (websocket). 
+```bash
+cp .env.sample .env
+```
+_Example env file:_
+```env
+APP=api
+APP_PORT=3000
+```
 
 # Install
+Using [docker](https://docs.docker.com/desktop/):
 ```bash
-cp .env.sample .env # Modify the parameters if you want
+git clone https://github.com/MarkelCA/toggles
+cd toggles
 docker compose up --build
-```
-
-# Examples
-```bash
-# List all flags
-curl localhost:8080/flags -v
-
-# Create flag
-curl localhost:8080/flags -d '{"name":"new-login-page","value":true}' -v
-
-# Get single flag
-curl localhost:8080/flags/new-login-page -v
-
-# Update flag
-curl localhost:8080/flags/new-login-page -X PUT --data '{"value":false}'
-```
-# Database
-Test commands, just for the record
-## Redis
-
-## Mongo
-Test commands
-```bash
-mongosh --port 27018
-show dbs
-use toggles
-db.flags.insert({"name":"new-login-page","value":true})
-db.flags.findOne({"name":"new-login-page"}).value
 ```
