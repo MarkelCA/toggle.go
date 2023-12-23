@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
 )
@@ -58,7 +57,11 @@ func (c *Command) Run(flagService flags.FlagService) Response {
         case "update":
             return Response{StatusInternalServerError,"The update command it's not implemented yet"}
         case "list":
-            return Response{StatusInternalServerError,"The list command it's not implemented yet"}
+            flags,err := flagService.List()
+            if err != nil {
+                return Response{StatusInternalServerError,err}
+            }             
+            return Response{StatusSuccess,flags}
         default:
             msg := fmt.Sprintf("Invalid command (%v)",c.Command) 
             return Response{StatusBadRequest,msg}
