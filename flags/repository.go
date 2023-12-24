@@ -16,6 +16,7 @@ type FlagRepository interface {
     Exists(name string) (bool, error)
     Set(key string, value interface{}) error
     List() ([]Flag, error)
+    Delete(name string) error
 }
 
 type FlagMongoRepository struct {
@@ -87,4 +88,12 @@ func (repository FlagMongoRepository) Exists(name string) (bool,error) {
     } else {
         return false,err
     }
+}
+
+func (repository FlagMongoRepository) Delete(name string) error {
+    _,err := repository.collection.DeleteOne(ctx,bson.D{{Key:"name",Value:name}})
+    if err != nil {
+        return err
+    }
+    return nil
 }

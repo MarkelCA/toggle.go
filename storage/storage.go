@@ -2,6 +2,9 @@ package storage
 
 import "time"
 
+
+const DEFAULT_EXPIRATION_TIME = 5 * time.Minute
+
 type KeyValueStore interface {
     Get(key string) (string, error)
     Delete(key string) error

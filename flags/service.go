@@ -86,3 +86,18 @@ func (flagService FlagService) List()([]Flag, error) {
     return flags,nil
 }
 
+
+func (flagService FlagService) Delete(name string) error {
+    if exists,err := flagService.Exists(name) ; err != nil {
+        return err
+    } else if !exists {
+        return ErrFlagNotFound
+    }
+    if err := flagService.repository.Delete(name) ; err != nil {
+        return err
+    }
+    if err := flagService.cacheClient.Delete(name) ; err != nil {
+        return err
+    }
+    return nil
+}

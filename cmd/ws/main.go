@@ -21,15 +21,15 @@ func main() {
          panic(err)
      }
 
-    db,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
+    database,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
     if err != nil {
         panic("Couldn't connect to mongo!")
     }
 
-    repository := storage.NewRedisClient(redisHost, redisPort)
-    service := flags.NewFlagService(repository,db)
+    cacheClient := storage.NewRedisClient(redisHost, redisPort)
+    flagService := flags.NewFlagService(cacheClient,database)
 
-    controller := WSController{service}
+    controller := WSController{flagService,cacheClient}
 
     host := fmt.Sprintf(":%v", appPort)
     controller.Init(host)

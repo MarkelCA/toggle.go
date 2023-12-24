@@ -23,6 +23,7 @@ func (fc FlagController) Init(host string) {
     r.GET("/flags/:flagid", fc.GetFlag)
     r.PUT("/flags/:flagid", fc.UpdateFlag)
     r.POST("/flags", fc.CreateFlag)
+    r.DELETE("/flags/:flagid", fc.DeleteFlag)
     r.Run(host)
 }
 
@@ -48,6 +49,19 @@ func (fc FlagController) GetFlag(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, value)
+}
+
+func (fc FlagController) DeleteFlag(c *gin.Context) {
+    name := c.Params.ByName("flagid")
+    if err := fc.service.Delete(name) ; err != nil {
+        if err == flags.ErrFlagNotFound {
+            c.Status(http.StatusNotFound)
+            return 
+        }  else {
+            c.Status(http.StatusInternalServerError)
+            return 
+        }
+    }
 }
 
 func (fc FlagController) UpdateFlag(c *gin.Context) {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
+	"github.com/markelca/toggles/storage"
 )
 
 var broadcast = make(chan Command)
@@ -23,10 +24,11 @@ var customUpgrader = func(r *http.Request) bool {
 
 type WSController struct {
     flagService flags.FlagService
+    cacheClient storage.CacheClient
 }
 
 func (ws WSController) Init(host string) {
-    http.HandleFunc("/", handleWebSocket)
+    http.HandleFunc("/", ws.handleWebSocket)
     go handleMessages(ws)
     log.Printf("Starting server on %v...",host)
     log.Fatal(http.ListenAndServe(host, nil))
@@ -82,6 +84,8 @@ func (cmd *Command) Run(ws WSController) Response {
             return ws.Create(cmd)
         case "update":
             return ws.Update(cmd)
+        case "delete":
+            return ws.Delete(cmd)
         default:
             msg := fmt.Sprintf("Invalid command (%v)",cmd.Command) 
             return Response{StatusBadRequest,msg}
@@ -134,7 +138,19 @@ func (ws WSController) Create(cmd *Command) Response {
     return Response{StatusCreated,flag}
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+func (ws WSController) Delete(cmd *Command) Response {
+    key := fmt.Sprintf("%v",cmd.Data)
+    err := ws.flagService.Delete(key)
+    if err != nil {
+        if err == flags.ErrFlagNotFound {
+            return Response{StatusNotFound,nil}
+        }
+        return Response{StatusInternalServerError,nil}
+    }
+    return Response{StatusSuccess,nil}
+}
+
+func (ws WSController) handleWebSocket(w http.ResponseWriter, r *http.Request) {
     conn, err := upgrader.Upgrade(w, r, nil)
 
     if err != nil {
@@ -148,15 +164,12 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
     for {
         var cmd Command
         err := conn.ReadJSON(&cmd)
-        cmd.emmiter = conn
-        // cmd.Time = JSONTime(time.Now())
-        log.Printf("debug: %v", cmd)
-        log.Printf("Message received: %v", cmd)
         if err != nil {
             log.Println("Error reading message:", err)
             delete(clients, conn)
             break
         }
+        cmd.emmiter = conn
         broadcast <- cmd
     }
 }
