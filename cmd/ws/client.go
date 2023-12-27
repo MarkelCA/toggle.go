@@ -70,7 +70,7 @@ func (c *Client) readPump() {
         if cmd.Command == CommandTypeUpdate {
             c.hub.broadcast <- message
         } else {
-            r := c.controller.Run(&cmd)
+            r := c.controller.RunCommand(&cmd)
             cr := ClientResponse{r,c}
             c.hub.response <- cr
         }

@@ -1,8 +1,24 @@
 package flags
 
+import (
+    "encoding/json"
+)
+
 type Flag struct {
     Name  string `json:"name"`
     Value bool `json:"value"`
+}
+
+func ParseFlag(data interface{}) (*Flag,error) {
+    jsonBody,err := json.Marshal(data)
+    if err != nil {
+        return nil,err
+    }
+    var flag Flag
+    if err = json.Unmarshal(jsonBody, &flag); err != nil {
+        return nil,err
+    }
+    return &flag,nil
 }
 
 

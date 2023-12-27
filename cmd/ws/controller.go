@@ -1,83 +1,18 @@
 package main
 
-
-//
 import (
-	"encoding/json"
 	"fmt"
-// 	"log"
-// 	"net/http"
-// 	"github.com/gorilla/websocket"
 	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/storage"
 )
-//
-// var broadcast = make(chan Command)
-// var clients = make(map[*websocket.Conn]bool)
-// var upgrader = websocket.Upgrader{
-//     CheckOrigin: customUpgrader,
-// }
-//
-// // Just for local envs. It should not return always true on production applications.
-// // https://pkg.go.dev/github.com/gorilla/websocket?utm_source=godoc#hdr-Origin_Considerations
-// var customUpgrader = func(r *http.Request) bool {
-//     return true
-// }
-//
+
 type WSController struct {
     flagService flags.FlagService
     cacheClient storage.CacheClient
 }
 
-// func (ws WSController) Init(host string) {
-//     http.HandleFunc("/", ws.handleWebSocket)
-//     go handleMessages(ws)
-//     log.Printf("Starting server on %v...",host)
-//     log.Fatal(http.ListenAndServe(host, nil))
-// }
-//
-//
-
-type CommandType string
-const (
-    CommandTypeGet    = "get"
-    CommandTypeUpdate = "update"
-    CommandTypeCreate = "create"
-    CommandTypeDelete = "delete"
-)
-
-type Command struct {
-    Command string `json:"command"`
-    Data interface{} `json:"data"`
-    broadcast bool
-    emmiter *Client
-}
-
-type Status int
-
-const (
-	StatusSuccess Status = 200
-	StatusCreated Status = 201
-
-	StatusInternalServerError Status = 500
-
-    StatusBadRequest    Status = 400
-    StatusNotFound      Status = 404
-	StatusConflict      Status = 409
-)
-
-type Response struct {
-    Status Status `json:"status"`
-    Value interface{} `json:"value"`
-}
-
-type ClientResponse struct {
-    Response
-    Client *Client
-}
-
 func (ws WSController) Update(cmd *Command) Response {
-    flag,err := ParseFlag(cmd.Data)
+    flag,err := flags.ParseFlag(cmd.Data)
     if err != nil {
         return Response{StatusInternalServerError,err}
     }
@@ -92,7 +27,7 @@ func (ws WSController) Update(cmd *Command) Response {
     return Response{StatusCreated,nil}
 }
 
-func (ws WSController) Run(cmd *Command) Response {
+func (ws WSController) RunCommand(cmd *Command) Response {
     switch cmd.Command {
         case CommandTypeGet:
             return ws.Get(cmd)
@@ -127,20 +62,8 @@ func (ws WSController) Get(c *Command) Response {
         return Response{StatusSuccess,value}
 }
 
-func ParseFlag(data interface{}) (*flags.Flag,error) {
-    jsonBody,err := json.Marshal(data)
-    if err != nil {
-        return nil,err
-    }
-    var flag flags.Flag
-    if err = json.Unmarshal(jsonBody, &flag); err != nil {
-        return nil,err
-    }
-    return &flag,nil
-}
-
 func (ws WSController) Create(cmd *Command) Response {
-    flag,err := ParseFlag(cmd.Data)
+    flag,err := flags.ParseFlag(cmd.Data)
     if err != nil {
         return Response{StatusInternalServerError,err}
     }
@@ -165,54 +88,3 @@ func (ws WSController) Delete(cmd *Command) Response {
     }
     return Response{StatusSuccess,nil}
 }
-//
-// func (ws WSController) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-//     conn, err := upgrader.Upgrade(w, r, nil)
-//
-//     if err != nil {
-//         log.Println("Error upgrading connection:", err)
-//         return
-//     }
-//     defer conn.Close()
-//
-//     clients[conn] = true
-//
-//     for {
-//         var cmd Command
-//         err := conn.ReadJSON(&cmd)
-//         if err != nil {
-//             log.Println("Error reading message:", err)
-//             delete(clients, conn)
-//             break
-//         }
-//         cmd.emmiter = conn
-//         broadcast <- cmd
-//     }
-// }
-//
-// func handleMessages(ws WSController) {
-//     for {
-//         cmd := <-broadcast
-//         response := cmd.Run(ws)
-//
-//         if cmd.broadcast {
-//             log.Println("(Broadcasted)")
-//             for conn := range clients {
-//                 err := conn.WriteJSON(response)
-//                 if err != nil {
-//                     log.Println("Error writing message:", err)
-//                     conn.Close()
-//                     delete(clients, conn)
-//                 }
-//             }
-//         } else {
-//             log.Println("(NOT Broadcasted)")
-//             err := cmd.emmiter.WriteJSON(response)
-//             if err != nil {
-//                 log.Println("Error writing message:", err)
-//                 cmd.emmiter.Close()
-//                 delete(clients, cmd.emmiter)
-//             }
-//         }
-//     }
-// }
