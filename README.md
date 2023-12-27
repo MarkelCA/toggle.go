@@ -8,7 +8,7 @@ cp .env.sample .env
 ```
 _Example env file:_
 ```env
-APP=api
+APP=ws
 APP_PORT=3000
 ```
 
