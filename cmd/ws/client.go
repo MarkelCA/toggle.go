@@ -65,14 +65,18 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+        log.Println(message)
         var cmd Command
         json.Unmarshal(message,&cmd)
+         
+        r := c.controller.RunCommand(&cmd)
+        responseBytes,_ := json.Marshal(r)
+
         if cmd.Command == CommandTypeUpdate {
-            c.hub.broadcast <- message
+            c.hub.broadcast <- responseBytes
         } else {
-            r := c.controller.RunCommand(&cmd)
-            cr := ClientResponse{r,c}
-            c.hub.response <- cr
+            response := ClientResponse{c,responseBytes}
+            c.hub.response <- response
         }
 	}
 }

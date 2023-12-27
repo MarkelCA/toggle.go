@@ -1,7 +1,5 @@
 package main
 
-import "encoding/json"
-
 type Hub struct {
 	clients map[*Client]bool
 	response chan ClientResponse
@@ -33,16 +31,11 @@ func (h *Hub) run() {
 				close(client.send)
 			}
 		case clientResponse := <-h.response:
-            response := Response{clientResponse.Status,clientResponse.Value}
-            responseBytes,err := json.Marshal(response)
-            if err != nil {
-                response = Response{StatusInternalServerError,nil}
-            }
             select {
-            case clientResponse.Client.send <- responseBytes:
+            case clientResponse.client.send <- clientResponse.data:
             default:
-                close(clientResponse.Client.send)
-                delete(h.clients, clientResponse.Client)
+                close(clientResponse.client.send)
+                delete(h.clients, clientResponse.client)
             }
 
 		case message := <-h.broadcast:

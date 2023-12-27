@@ -19,7 +19,7 @@ type Response struct {
 }
 
 type ClientResponse struct {
-    Response
-    Client *Client
+    client *Client
+    data []byte
 }
 
