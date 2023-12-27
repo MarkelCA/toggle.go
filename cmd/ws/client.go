@@ -1,7 +1,3 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
 
 import (
@@ -41,10 +37,8 @@ var upgrader = websocket.Upgrader{
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub
-
-	// The websocket connection.
 	conn *websocket.Conn
-
+    controller WSController
 	// Buffered channel of outbound messages.
 	send chan []byte
 }
@@ -73,10 +67,10 @@ func (c *Client) readPump() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
         var cmd Command
         json.Unmarshal(message,&cmd)
-        if cmd.Command == "update" {
+        if cmd.Command == CommandTypeUpdate {
             c.hub.broadcast <- message
         } else {
-            r := cmd.Run()
+            r := c.controller.Run(&cmd)
             cr := ClientResponse{r,c}
             c.hub.response <- cr
         }
@@ -130,17 +124,15 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn,controller: c, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
 	go client.writePump()
 	go client.readPump()
 }

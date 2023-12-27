@@ -3,13 +3,13 @@ package main
 
 //
 import (
-// 	"encoding/json"
+	"encoding/json"
 	"fmt"
 // 	"log"
 // 	"net/http"
 // 	"github.com/gorilla/websocket"
-// 	"github.com/markelca/toggles/flags"
-// 	"github.com/markelca/toggles/storage"
+	"github.com/markelca/toggles/flags"
+	"github.com/markelca/toggles/storage"
 )
 //
 // var broadcast = make(chan Command)
@@ -24,11 +24,11 @@ import (
 //     return true
 // }
 //
-// type WSController struct {
-//     flagService flags.FlagService
-//     cacheClient storage.CacheClient
-// }
-//
+type WSController struct {
+    flagService flags.FlagService
+    cacheClient storage.CacheClient
+}
+
 // func (ws WSController) Init(host string) {
 //     http.HandleFunc("/", ws.handleWebSocket)
 //     go handleMessages(ws)
@@ -37,6 +37,15 @@ import (
 // }
 //
 //
+
+type CommandType string
+const (
+    CommandTypeGet    = "get"
+    CommandTypeUpdate = "update"
+    CommandTypeCreate = "create"
+    CommandTypeDelete = "delete"
+)
+
 type Command struct {
     Command string `json:"command"`
     Data interface{} `json:"data"`
@@ -67,101 +76,95 @@ type ClientResponse struct {
     Client *Client
 }
 
-// func (ws WSController) Update(cmd *Command) Response {
-//     flag,err := ParseFlag(cmd.Data)
-//     if err != nil {
-//         return Response{StatusInternalServerError,err}
-//     }
-//     err = ws.flagService.Update(flag.Name,flag.Value)
-//     if err != nil {
-//         if err == flags.ErrFlagNotFound {
-//             return Response{StatusNotFound,err}
-//         }
-//         return Response{StatusInternalServerError, err}
-//     }
-//
-//     return Response{StatusCreated,nil}
-// }
-//
-func (cmd *Command) Run(/*ws WSController*/) Response {
-    var str string
+func (ws WSController) Update(cmd *Command) Response {
+    flag,err := ParseFlag(cmd.Data)
+    if err != nil {
+        return Response{StatusInternalServerError,err}
+    }
+    err = ws.flagService.Update(flag.Name,flag.Value)
+    if err != nil {
+        if err == flags.ErrFlagNotFound {
+            return Response{StatusNotFound,err}
+        }
+        return Response{StatusInternalServerError, err}
+    }
+
+    return Response{StatusCreated,nil}
+}
+
+func (ws WSController) Run(cmd *Command) Response {
     switch cmd.Command {
-        case "get":
-            str = "running get"
-            // return ws.Get(cmd)
-        case "create":
-            str = "running create"
-            // return ws.Create(cmd)
-        case "update":
-            str = "running update"
-            // return ws.Update(cmd)
-        case "delete":
-            str = "running delete"
-            // return ws.Delete(cmd)
+        case CommandTypeGet:
+            return ws.Get(cmd)
+        case CommandTypeCreate:
+            return ws.Create(cmd)
+        case CommandTypeUpdate:
+            return ws.Update(cmd)
+        case CommandTypeDelete:
+            return ws.Delete(cmd)
         default:
             msg := fmt.Sprintf("Invalid command (%v)",cmd.Command) 
             return Response{StatusBadRequest,msg}
     }
-    return Response{StatusSuccess,str}
 }
-//
-// func (ws WSController) Get(c *Command) Response {
-//         if c.Data == nil {
-//             flags,err := ws.flagService.List()
-//             if err != nil {
-//                 return Response{StatusInternalServerError,err}
-//             }             
-//             return Response{StatusSuccess,flags}
-//         }
-//         key := c.Data.(string)
-//         value,err := ws.flagService.Get(key)
-//         if err != nil {
-//             if err == flags.ErrFlagNotFound{
-//                 return Response{StatusNotFound,err}
-//             }
-//             return Response{StatusInternalServerError,err}
-//         }
-//         return Response{StatusSuccess,value}
-// }
-//
-// func ParseFlag(data interface{}) (*flags.Flag,error) {
-//     jsonBody,err := json.Marshal(data)
-//     if err != nil {
-//         return nil,err
-//     }
-//     var flag flags.Flag
-//     if err = json.Unmarshal(jsonBody, &flag); err != nil {
-//         return nil,err
-//     }
-//     return &flag,nil
-// }
-//
-// func (ws WSController) Create(cmd *Command) Response {
-//     flag,err := ParseFlag(cmd.Data)
-//     if err != nil {
-//         return Response{StatusInternalServerError,err}
-//     }
-//     err = ws.flagService.Create(*flag)
-//     if err != nil {
-//         if err == flags.ErrFlagAlreadyExists {
-//             return Response{StatusConflict,err}
-//         }
-//         return Response{StatusInternalServerError,err}
-//     }
-//     return Response{StatusCreated,flag}
-// }
-//
-// func (ws WSController) Delete(cmd *Command) Response {
-//     key := fmt.Sprintf("%v",cmd.Data)
-//     err := ws.flagService.Delete(key)
-//     if err != nil {
-//         if err == flags.ErrFlagNotFound {
-//             return Response{StatusNotFound,nil}
-//         }
-//         return Response{StatusInternalServerError,nil}
-//     }
-//     return Response{StatusSuccess,nil}
-// }
+
+func (ws WSController) Get(c *Command) Response {
+        if c.Data == nil {
+            flags,err := ws.flagService.List()
+            if err != nil {
+                return Response{StatusInternalServerError,err}
+            }             
+            return Response{StatusSuccess,flags}
+        }
+        key := c.Data.(string)
+        value,err := ws.flagService.Get(key)
+        if err != nil {
+            if err == flags.ErrFlagNotFound{
+                return Response{StatusNotFound,err}
+            }
+            return Response{StatusInternalServerError,err}
+        }
+        return Response{StatusSuccess,value}
+}
+
+func ParseFlag(data interface{}) (*flags.Flag,error) {
+    jsonBody,err := json.Marshal(data)
+    if err != nil {
+        return nil,err
+    }
+    var flag flags.Flag
+    if err = json.Unmarshal(jsonBody, &flag); err != nil {
+        return nil,err
+    }
+    return &flag,nil
+}
+
+func (ws WSController) Create(cmd *Command) Response {
+    flag,err := ParseFlag(cmd.Data)
+    if err != nil {
+        return Response{StatusInternalServerError,err}
+    }
+    err = ws.flagService.Create(*flag)
+    if err != nil {
+        if err == flags.ErrFlagAlreadyExists {
+            return Response{StatusConflict,err}
+        }
+        return Response{StatusInternalServerError,err}
+    }
+    return Response{StatusCreated,flag}
+}
+
+func (ws WSController) Delete(cmd *Command) Response {
+    key := fmt.Sprintf("%v",cmd.Data)
+    err := ws.flagService.Delete(key)
+    if err != nil {
+        if err == flags.ErrFlagNotFound {
+            return Response{StatusNotFound,nil}
+        }
+        return Response{StatusInternalServerError,nil}
+    }
+    return Response{StatusSuccess,nil}
+}
 //
 // func (ws WSController) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 //     conn, err := upgrader.Upgrade(w, r, nil)

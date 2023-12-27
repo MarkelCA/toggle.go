@@ -5,26 +5,51 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"net/http"
 	"time"
+    "fmt"
+	"os"
+	"strconv"
+	"github.com/markelca/toggles/flags"
+	"github.com/markelca/toggles/storage"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
-
 func main() {
-	flag.Parse()
+    appPort      := os.Getenv("APP_PORT")
+    redisHost    := os.Getenv("REDIS_HOST")
+    redisPortStr := os.Getenv("REDIS_PORT")
+    mongoHost    := os.Getenv("MONGO_HOST")
+    mongoPortStr := os.Getenv("MONGO_PORT")
+
+     redisPort, err  := strconv.Atoi(redisPortStr)
+     mongoPort, err2 := strconv.Atoi(mongoPortStr)
+     if err != nil || err2 != nil{
+         panic(err)
+     }
+
+    database,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
+    if err != nil {
+        panic("Couldn't connect to mongo!")
+    }
+
+    cacheClient := storage.NewRedisClient(redisHost, redisPort)
+    flagService := flags.NewFlagService(cacheClient,database)
+
+    controller := WSController{flagService,cacheClient}
+
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		serveWs(hub, controller, w, r)
 	})
+
+    host := fmt.Sprintf(":%v", appPort)
 	server := &http.Server{
-		Addr:              *addr,
+		Addr:              host,
 		ReadHeaderTimeout: 3 * time.Second,
 	}
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
