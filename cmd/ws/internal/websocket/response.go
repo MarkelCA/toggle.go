@@ -1,4 +1,4 @@
-package main
+package websocket
 
 type Status int
 
@@ -16,10 +16,5 @@ const (
 type Response struct {
     Status Status `json:"status"`
     Value interface{} `json:"value"`
-}
-
-type ClientResponse struct {
-    client *Client
-    data []byte
 }
 

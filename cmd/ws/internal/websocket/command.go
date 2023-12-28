@@ -1,4 +1,4 @@
-package main
+package websocket
 
 type CommandType string
 const (

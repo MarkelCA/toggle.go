@@ -1,4 +1,4 @@
-package main
+package websocket
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 )
 
 type WSController struct {
-    flagService flags.FlagService
-    cacheClient storage.CacheClient
+    FlagService flags.FlagService
+    CacheClient storage.CacheClient
 }
 
 func (ws WSController) Update(cmd *Command) Response {
@@ -16,7 +16,7 @@ func (ws WSController) Update(cmd *Command) Response {
     if err != nil {
         return Response{StatusInternalServerError,err}
     }
-    err = ws.flagService.Update(flag.Name,flag.Value)
+    err = ws.FlagService.Update(flag.Name,flag.Value)
     if err != nil {
         if err == flags.ErrFlagNotFound {
             return Response{StatusNotFound,err}
@@ -45,14 +45,14 @@ func (ws WSController) RunCommand(cmd *Command) Response {
 
 func (ws WSController) Get(c *Command) Response {
         if c.Data == nil {
-            flags,err := ws.flagService.List()
+            flags,err := ws.FlagService.List()
             if err != nil {
                 return Response{StatusInternalServerError,err}
             }             
             return Response{StatusSuccess,flags}
         }
         key := c.Data.(string)
-        value,err := ws.flagService.Get(key)
+        value,err := ws.FlagService.Get(key)
         if err != nil {
             if err == flags.ErrFlagNotFound{
                 return Response{StatusNotFound,err}
@@ -67,7 +67,7 @@ func (ws WSController) Create(cmd *Command) Response {
     if err != nil {
         return Response{StatusInternalServerError,err}
     }
-    err = ws.flagService.Create(*flag)
+    err = ws.FlagService.Create(*flag)
     if err != nil {
         if err == flags.ErrFlagAlreadyExists {
             return Response{StatusConflict,err}
@@ -79,7 +79,7 @@ func (ws WSController) Create(cmd *Command) Response {
 
 func (ws WSController) Delete(cmd *Command) Response {
     key := fmt.Sprintf("%v",cmd.Data)
-    err := ws.flagService.Delete(key)
+    err := ws.FlagService.Delete(key)
     if err != nil {
         if err == flags.ErrFlagNotFound {
             return Response{StatusNotFound,nil}

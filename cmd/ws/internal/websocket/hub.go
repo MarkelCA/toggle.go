@@ -1,4 +1,4 @@
-package main
+package websocket
 
 type Hub struct {
 	clients map[*Client]bool
@@ -8,7 +8,7 @@ type Hub struct {
 	unregister chan *Client
 }
 
-func newHub() *Hub {
+func NewHub() *Hub {
 	return &Hub{
         // All these are unbuffered channels, it might be interesting to
         // consider buffered channels to be able to resist traffic bursts.
@@ -20,7 +20,7 @@ func newHub() *Hub {
 	}
 }
 
-func (h *Hub) run() {
+func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:

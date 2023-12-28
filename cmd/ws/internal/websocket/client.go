@@ -1,4 +1,4 @@
-package main
+package websocket
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -41,6 +40,11 @@ type Client struct {
     controller WSController
 	// Buffered channel of outbound messages.
 	send chan []byte
+}
+
+type ClientResponse struct {
+    client *Client
+    data []byte
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -128,7 +132,7 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
