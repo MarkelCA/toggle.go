@@ -2,35 +2,25 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"github.com/markelca/toggles/flags"
 	"github.com/markelca/toggles/storage"
 )
 
-
 func main() {
-    appPort      := os.Getenv("APP_PORT")
-    redisHost    := os.Getenv("REDIS_HOST")
-    redisPortStr := os.Getenv("REDIS_PORT")
-    mongoHost    := os.Getenv("MONGO_HOST")
-    mongoPortStr := os.Getenv("MONGO_PORT")
+	params, paramErr := GetConnectionParams()
+	if paramErr != nil {
+		panic(fmt.Sprintf("Param errors have been found: %v", paramErr))
+	}
 
-     redisPort, err  := strconv.Atoi(redisPortStr)
-     mongoPort, err2 := strconv.Atoi(mongoPortStr)
-     if err != nil || err2 != nil{
-         panic(err)
-     }
+	// repository := storage.NewMemoryRepository()
+	db, err := flags.NewFlagMongoRepository(params.mongoHost, params.mongoPort)
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
+	}
 
-    // repository := storage.NewMemoryRepository()
-    db,err := flags.NewFlagMongoRepository(mongoHost,mongoPort)
-    if err != nil {
-        panic("Couldn't connect to mongo!")
-    }
-
-    repository := storage.NewRedisClient(redisHost, redisPort)
-    service := flags.NewFlagService(repository,db)
-    controller := NewFlagController(service)
-    host := fmt.Sprintf(":%v",appPort)
-    controller.Init(host)
+	repository := storage.NewRedisClient(params.redisHost, params.redisPort)
+	service := flags.NewFlagService(repository, db)
+	controller := NewFlagController(service)
+	host := fmt.Sprintf(":%v", params.appPort)
+	controller.Init(host)
 }
