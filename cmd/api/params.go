@@ -50,30 +50,33 @@ func GetConnectionParams() (*ConnectionParams, []error) {
 		errors = append(errors, InvalidPortError{port: appPort})
 	}
 	redisHost := os.Getenv("REDIS_HOST")
-	// if !validateHost(redisHost) {
-	// 	errors = append(errors, InvalidHostError{host: redisHost})
-	// }
+	redisIPs, err := net.LookupIP(redisHost)
+	if err != nil {
+		errors = append(errors, err)
+	} else {
+		if !validateHost(redisIPs[0].String()) {
+			errors = append(errors, InvalidHostError{host: redisHost})
+		}
+	}
 	redisPortStr := os.Getenv("REDIS_PORT")
 	redisPort, err := strconv.Atoi(redisPortStr)
 	if err != nil {
 		errors = append(errors, err)
 	}
-	// if !validatePort(redisPortStr) {
-	// 	errors = append(errors, InvalidPortError{port: redisPortStr})
-	// }
 	mongoHost := os.Getenv("MONGO_HOST")
-	// if !validateHost(mongoHost) {
-	// 	errors = append(errors, InvalidHostError{host: mongoHost})
-	// }
+	mongoIPs, err := net.LookupIP(mongoHost)
+	if err != nil {
+		errors = append(errors, err)
+	} else {
+		if !validateHost(mongoIPs[0].String()) {
+			errors = append(errors, InvalidHostError{host: redisHost})
+		}
+	}
 	mongoPortStr := os.Getenv("MONGO_PORT")
 	mongoPort, err := strconv.Atoi(mongoPortStr)
 	if err != nil {
 		errors = append(errors, err)
 	}
-	// if !validatePort(mongoPortStr) {
-	// 	errors = append(errors, InvalidPortError{port: mongoPortStr})
-	// }
-	//
 	connParams := &ConnectionParams{appPort: appPort, redisHost: redisHost, mongoHost: mongoHost, redisPort: uint(redisPort), mongoPort: uint(mongoPort)}
 
 	if len(errors) > 0 {

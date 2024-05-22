@@ -8,8 +8,12 @@ import (
 
 func main() {
 	params, paramErr := GetConnectionParams()
-	if paramErr != nil {
-		panic(fmt.Sprintf("Param errors have been found: %v", paramErr))
+	if len(paramErr) > 0 {
+		errMsg := "Param errors have been found:\n"
+		for _, err := range paramErr {
+			errMsg += fmt.Sprintf("  - %v\n", err.Error())
+		}
+		panic(errMsg)
 	}
 
 	// repository := storage.NewMemoryRepository()
