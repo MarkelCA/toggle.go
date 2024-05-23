@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/markelca/toggles/internal/storage"
 	"github.com/markelca/toggles/internal/websocket"
 	"github.com/markelca/toggles/pkg/flags"
+	"github.com/markelca/toggles/pkg/storage"
 	"net/http"
 	"os"
 	"strconv"

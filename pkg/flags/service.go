@@ -1,7 +1,7 @@
 package flags
 
 import (
-	"github.com/markelca/toggles/internal/storage"
+	"github.com/markelca/toggles/pkg/storage"
 	"strconv"
 	"time"
 )
