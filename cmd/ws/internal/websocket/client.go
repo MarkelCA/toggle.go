@@ -3,10 +3,10 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"time"
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -35,16 +35,16 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub *Hub
-	conn *websocket.Conn
-    controller WSController
+	hub        *Hub
+	conn       *websocket.Conn
+	controller WSController
 	// Buffered channel of outbound messages.
 	send chan []byte
 }
 
 type ClientResponse struct {
-    client *Client
-    data []byte
+	client *Client
+	data   []byte
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -69,19 +69,19 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-        log.Println(message)
-        var cmd Command
-        json.Unmarshal(message,&cmd)
-         
-        r := c.controller.RunCommand(&cmd)
-        responseBytes,_ := json.Marshal(r)
+		log.Println(message)
+		var cmd Command
+		json.Unmarshal(message, &cmd)
 
-        if cmd.Command == CommandTypeUpdate {
-            c.hub.broadcast <- responseBytes
-        } else {
-            response := ClientResponse{c,responseBytes}
-            c.hub.response <- response
-        }
+		r := c.controller.RunCommand(&cmd)
+		responseBytes, _ := json.Marshal(r)
+
+		if cmd.Command == CommandTypeUpdate {
+			c.hub.broadcast <- responseBytes
+		} else {
+			response := ClientResponse{c, responseBytes}
+			c.hub.response <- response
+		}
 	}
 }
 
@@ -138,7 +138,7 @@ func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn,controller: c, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, controller: c, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	go client.writePump()

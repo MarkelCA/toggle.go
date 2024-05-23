@@ -8,13 +8,12 @@ const (
 
 	StatusInternalServerError Status = 500
 
-    StatusBadRequest    Status = 400
-    StatusNotFound      Status = 404
-	StatusConflict      Status = 409
+	StatusBadRequest Status = 400
+	StatusNotFound   Status = 404
+	StatusConflict   Status = 409
 )
 
 type Response struct {
-    Status Status `json:"status"`
-    Value interface{} `json:"value"`
+	Status Status      `json:"status"`
+	Value  interface{} `json:"value"`
 }
-
