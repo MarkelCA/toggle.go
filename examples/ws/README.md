@@ -25,3 +25,8 @@ Get the flag value (after creation):
 {"command":"get","data":"myflag"}
 {"status":200,"value":false}
 ```
+Update the flag value:
+```
+{"command":"update","data":{"name":"myflag","value":true}}
+{"status":201,"value":null}
+```

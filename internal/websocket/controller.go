@@ -2,8 +2,8 @@ package websocket
 
 import (
 	"fmt"
-	"github.com/markelca/toggles/flags"
-	"github.com/markelca/toggles/storage"
+	"github.com/markelca/toggles/internal/storage"
+	"github.com/markelca/toggles/pkg/flags"
 )
 
 type WSController struct {

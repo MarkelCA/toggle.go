@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/markelca/toggles/flags"
+	"github.com/markelca/toggles/pkg/flags"
 	"log"
 	"net/http"
 )
