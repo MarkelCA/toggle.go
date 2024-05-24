@@ -1,4 +1,4 @@
-package main
+package envs
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 )
 
 type ConnectionParams struct {
-	appPort   string
-	redisHost string
-	redisPort uint
-	mongoHost string
-	mongoPort uint
+	AppPort   string
+	RedisHost string
+	RedisPort uint
+	MongoHost string
+	MongoPort uint
 }
 
 type InvalidHostError struct {
@@ -77,7 +77,7 @@ func GetConnectionParams() (*ConnectionParams, []error) {
 	if err != nil {
 		errors = append(errors, err)
 	}
-	connParams := &ConnectionParams{appPort: appPort, redisHost: redisHost, mongoHost: mongoHost, redisPort: uint(redisPort), mongoPort: uint(mongoPort)}
+	connParams := &ConnectionParams{AppPort: appPort, RedisHost: redisHost, MongoHost: mongoHost, RedisPort: uint(redisPort), MongoPort: uint(mongoPort)}
 
 	if len(errors) > 0 {
 		return nil, errors

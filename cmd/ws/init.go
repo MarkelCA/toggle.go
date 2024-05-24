@@ -2,39 +2,31 @@ package main
 
 import (
 	"fmt"
+	"github.com/markelca/toggles/internal/envs"
 	"github.com/markelca/toggles/internal/websocket"
 	"github.com/markelca/toggles/pkg/flags"
 	"github.com/markelca/toggles/pkg/storage"
+	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 )
 
-var (
-	APP_PORT       = os.Getenv("APP_PORT")
-	REDIS_HOST     = os.Getenv("REDIS_HOST")
-	REDIS_PORT_STR = os.Getenv("REDIS_PORT")
-	MONGO_HOST     = os.Getenv("MONGO_HOST")
-	MONGO_PORT_STR = os.Getenv("MONGO_PORT")
-)
-
 func Init() error {
-	redisPort, err := strconv.Atoi(REDIS_PORT_STR)
-	if err != nil {
-		return err
+	params, paramErr := envs.GetConnectionParams()
+	if len(paramErr) > 0 {
+		errMsg := "Param errors have been found:\n"
+		for _, err := range paramErr {
+			errMsg += fmt.Sprintf("  - %v\n", err.Error())
+		}
+		log.Fatal(errMsg)
 	}
-	mongoPort, err := strconv.Atoi(MONGO_PORT_STR)
+
+	database, err := flags.NewFlagMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		return err
 	}
 
-	database, err := flags.NewFlagMongoRepository(MONGO_HOST, uint(mongoPort))
-	if err != nil {
-		return err
-	}
-
-	cacheClient := storage.NewRedisClient(REDIS_HOST, uint(redisPort))
+	cacheClient := storage.NewRedisClient(params.RedisHost, params.RedisPort)
 	flagService := flags.NewFlagService(cacheClient, database)
 
 	controller := websocket.WSController{FlagService: flagService, CacheClient: cacheClient}
@@ -45,7 +37,7 @@ func Init() error {
 		websocket.ServeWs(hub, controller, w, r)
 	})
 
-	host := fmt.Sprintf(":%v", APP_PORT)
+	host := fmt.Sprintf(":%v", params.AppPort)
 	server := &http.Server{
 		Addr:              host,
 		ReadHeaderTimeout: 3 * time.Second,
