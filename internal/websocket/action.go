@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -31,4 +32,12 @@ type Action struct {
 	Action ActionType `json:"action"`
 	Flag   *string    `json:"flag"`
 	Value  *bool      `json:"value"`
+}
+
+func (a Action) String() string {
+	str, err := json.Marshal(a)
+	if err != nil {
+		return fmt.Sprintf("{\"action\": %v, \"flag\": %v, \"value\": %v}", a.Action, a.Flag, a.Value)
+	}
+	return string(str)
 }

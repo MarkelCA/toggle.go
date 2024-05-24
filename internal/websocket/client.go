@@ -79,8 +79,9 @@ func (c *Client) readPump() {
 
 func (c *Client) handleMessage(message []byte) {
 	var action Action
-	json.Unmarshal(message, &action)
-	r := c.controller.GetV2(&action)
+	c.actionMarshaller.Unmarshal(message, &action)
+	fmt.Println(action)
+	r := c.controller.RunAction(&action)
 	responseBytes, _ := json.Marshal(r)
 	clientResponse := ClientResponse{c, responseBytes}
 	c.hub.response <- clientResponse
