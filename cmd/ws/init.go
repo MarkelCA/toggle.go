@@ -35,7 +35,8 @@ func Init() error {
 	hub := websocket.NewHub()
 	go hub.Run()
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		websocket.ServeWs(hub, controller, w, r)
+		actionMarshaller := websocket.JsonMarshaller{}
+		websocket.ServeWs(hub, controller, w, r, actionMarshaller)
 	})
 
 	host := fmt.Sprintf(":%v", params.AppPort)

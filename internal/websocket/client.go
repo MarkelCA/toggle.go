@@ -41,7 +41,8 @@ type Client struct {
 	conn       *websocket.Conn
 	controller WSController
 	// Buffered channel of outbound messages.
-	send chan []byte
+	send             chan []byte
+	actionMarshaller ActionMarshaller
 }
 
 type ClientResponse struct {
@@ -71,19 +72,34 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		var cmd Command
-		json.Unmarshal(message, &cmd)
 
-		r := c.controller.RunCommand(&cmd)
-		responseBytes, _ := json.Marshal(r)
-
-		if cmd.Command == CommandTypeUpdate {
-			c.hub.broadcast <- responseBytes
-		} else {
-			response := ClientResponse{c, responseBytes}
-			c.hub.response <- response
-		}
+		c.handleMessage(message)
 	}
+}
+
+func (c *Client) handleMessage(message []byte) {
+	var action Action
+	json.Unmarshal(message, &action)
+	r := c.controller.GetV2(&action)
+	responseBytes, _ := json.Marshal(r)
+	clientResponse := ClientResponse{c, responseBytes}
+	c.hub.response <- clientResponse
+
+	// r := c.controller.RunCommand(&action)
+	// responseBytes, err := c.actionMarshaller.Marshal(r)
+
+	// if err != nil {
+	// 	slog.Error(err.Error())
+	// 	return
+	// }
+	//
+	//	if cmd.Command == CommandTypeUpdate {
+	//		c.hub.broadcast <- responseBytes
+	//	} else {
+	//
+	//		response := ClientResponse{c, responseBytes}
+	//		c.hub.response <- response
+	//	}
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -133,13 +149,13 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request, am ActionMarshaller) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Info(fmt.Sprint(err))
 		return
 	}
-	client := &Client{hub: hub, conn: conn, controller: c, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, controller: c, send: make(chan []byte, 256), actionMarshaller: am}
 	client.hub.register <- client
 
 	go client.writePump()
