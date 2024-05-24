@@ -47,9 +47,9 @@ func (ws WSController) RunCommand(cmd *Command) Response {
 
 	switch response.Status {
 	case StatusInternalServerError:
-		slog.Error(fmt.Sprint(response.Value))
+		slog.Error(fmt.Sprintf("[Request failed] (%v): %v", cmd.String(), response.String()))
 	default:
-		slog.Info(fmt.Sprint(cmd))
+		slog.Info("[Request received] " + cmd.String())
 	}
 	return response
 }
