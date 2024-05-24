@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/markelca/toggles/internal/envs"
 	"github.com/markelca/toggles/internal/websocket"
 	"github.com/markelca/toggles/pkg/flags"
 	"github.com/markelca/toggles/pkg/storage"
-	"log"
-	"net/http"
-	"time"
 )
 
 func Init() error {

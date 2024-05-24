@@ -3,10 +3,12 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -64,12 +66,11 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				slog.Error(err.Error())
 			}
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		log.Println(message)
 		var cmd Command
 		json.Unmarshal(message, &cmd)
 
@@ -135,7 +136,7 @@ func (c *Client) writePump() {
 func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		slog.Info(fmt.Sprint(err))
 		return
 	}
 	client := &Client{hub: hub, conn: conn, controller: c, send: make(chan []byte, 256)}

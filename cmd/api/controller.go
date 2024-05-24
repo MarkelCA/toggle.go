@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/markelca/toggles/pkg/flags"
-	"log"
-	"net/http"
 )
 
 type FlagController struct {
@@ -89,7 +90,7 @@ func (fc FlagController) CreateFlag(c *gin.Context) {
 	var flag flags.Flag
 	jsonErr := c.BindJSON(&flag)
 	if jsonErr != nil {
-		log.Println("Error!", jsonErr)
+		slog.Error(jsonErr.Error())
 		return
 	}
 	flagErr := fc.service.Create(flag)

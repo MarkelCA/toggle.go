@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/markelca/toggles/internal/envs"
 	"github.com/markelca/toggles/pkg/flags"
 	"github.com/markelca/toggles/pkg/storage"
-	"log"
 )
 
 func main() {

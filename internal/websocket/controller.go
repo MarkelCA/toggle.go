@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/markelca/toggles/pkg/flags"
 	"github.com/markelca/toggles/pkg/storage"
@@ -16,7 +16,6 @@ type WSController struct {
 func (ws WSController) Update(cmd *Command) Response {
 	flag, err := flags.ParseFlag(cmd.Data)
 	if err != nil {
-		log.Print(err)
 		return Response{StatusInternalServerError, err}
 	}
 	err = ws.FlagService.Update(flag.Name, flag.Value)
@@ -24,7 +23,6 @@ func (ws WSController) Update(cmd *Command) Response {
 		if err == flags.ErrFlagNotFound {
 			return Response{StatusNotFound, err}
 		}
-		log.Print(err)
 		return Response{StatusInternalServerError, err}
 	}
 
@@ -32,26 +30,34 @@ func (ws WSController) Update(cmd *Command) Response {
 }
 
 func (ws WSController) RunCommand(cmd *Command) Response {
+	var response Response
 	switch cmd.Command {
 	case CommandTypeGet:
-		return ws.Get(cmd)
+		response = ws.Get(cmd)
 	case CommandTypeCreate:
-		return ws.Create(cmd)
+		response = ws.Create(cmd)
 	case CommandTypeUpdate:
-		return ws.Update(cmd)
+		response = ws.Update(cmd)
 	case CommandTypeDelete:
-		return ws.Delete(cmd)
+		response = ws.Delete(cmd)
 	default:
 		msg := fmt.Sprintf("Invalid command (%v)", cmd.Command)
-		return Response{StatusBadRequest, msg}
+		response = Response{StatusBadRequest, msg}
 	}
+
+	switch response.Status {
+	case StatusInternalServerError:
+		slog.Error(fmt.Sprint(response.Value))
+	default:
+		slog.Info(fmt.Sprint(cmd))
+	}
+	return response
 }
 
 func (ws WSController) Get(c *Command) Response {
 	if c.Data == nil {
 		flags, err := ws.FlagService.List()
 		if err != nil {
-			log.Print(err)
 			return Response{StatusInternalServerError, err}
 		}
 		return Response{StatusSuccess, flags}
@@ -62,7 +68,6 @@ func (ws WSController) Get(c *Command) Response {
 		if err == flags.ErrFlagNotFound {
 			return Response{StatusNotFound, err}
 		}
-		log.Print(err)
 		return Response{StatusInternalServerError, err}
 	}
 	return Response{StatusSuccess, value}
@@ -71,7 +76,6 @@ func (ws WSController) Get(c *Command) Response {
 func (ws WSController) Create(cmd *Command) Response {
 	flag, err := flags.ParseFlag(cmd.Data)
 	if err != nil {
-		log.Print(err)
 		return Response{StatusInternalServerError, err}
 	}
 	err = ws.FlagService.Create(*flag)
@@ -79,7 +83,6 @@ func (ws WSController) Create(cmd *Command) Response {
 		if err == flags.ErrFlagAlreadyExists {
 			return Response{StatusConflict, err}
 		}
-		log.Print(err)
 		return Response{StatusInternalServerError, err}
 	}
 	return Response{StatusCreated, flag}
@@ -92,7 +95,6 @@ func (ws WSController) Delete(cmd *Command) Response {
 		if err == flags.ErrFlagNotFound {
 			return Response{StatusNotFound, nil}
 		}
-		log.Print(err)
 		return Response{StatusInternalServerError, nil}
 	}
 	return Response{StatusSuccess, nil}

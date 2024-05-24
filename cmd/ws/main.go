@@ -5,11 +5,11 @@
 package main
 
 import (
-    "log"
+	"log"
 )
 
 func main() {
-    if err := Init(); err != nil {
+	if err := Init(); err != nil {
 		log.Fatal(err)
 	}
 }

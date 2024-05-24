@@ -1,9 +1,10 @@
 package flags
 
 import (
-	"github.com/markelca/toggles/pkg/storage"
 	"strconv"
 	"time"
+
+	"github.com/markelca/toggles/pkg/storage"
 )
 
 const DEFAULT_EXPIRATION_TIME = 5 * time.Minute
