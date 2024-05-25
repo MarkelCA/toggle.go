@@ -21,6 +21,7 @@ type ControllerV2 struct {
 func (controller ControllerV2) HandleMessage(message []byte, c *Client) {
 	var action Action
 	c.actionMarshaller.Unmarshal(message, &action)
+	// action.Type =
 
 	r := controller.RunAction(&action)
 
@@ -45,8 +46,11 @@ func (controller ControllerV2) RunAction(action *Action) Response {
 	case ActionTypeGet:
 		response = controller.GetV2(action)
 	case ActionTypeUpdate:
+		response = controller.Update(action)
 	case ActionTypeCreate:
+		response = controller.Create(action)
 	case ActionTypeDelete:
+		response = controller.Delete(action)
 	default:
 		msg := fmt.Sprintf("Invalid action type (%v)", action.Type)
 		response = Response{StatusBadRequest, msg}
@@ -78,4 +82,47 @@ func (controller ControllerV2) GetV2(action *Action) Response {
 		return Response{StatusInternalServerError, err}
 	}
 	return Response{StatusSuccess, flag}
+}
+
+func (controller ControllerV2) Delete(action *Action) Response {
+	key := fmt.Sprintf("%v", action.Flag)
+	err := controller.FlagService.Delete(key)
+	if err != nil {
+		if err == flags.ErrFlagNotFound {
+			return Response{StatusNotFound, nil}
+		}
+		return Response{StatusInternalServerError, nil}
+	}
+	return Response{StatusSuccess, nil}
+}
+
+func (controller ControllerV2) Create(action *Action) Response {
+	flag, err := action.toFlag()
+	if err != nil {
+		return Response{StatusBadRequest, err}
+	}
+	err = controller.FlagService.Create(*flag)
+	if err != nil {
+		if err == flags.ErrFlagAlreadyExists {
+			return Response{StatusConflict, err}
+		}
+		return Response{StatusInternalServerError, err}
+	}
+	return Response{StatusCreated, flag}
+}
+
+func (controller ControllerV2) Update(action *Action) Response {
+	flag, err := action.toFlag()
+	if err != nil {
+		return Response{StatusBadRequest, err}
+	}
+	err = controller.FlagService.Update(flag.Name, flag.Value)
+	if err != nil {
+		if err == flags.ErrFlagNotFound {
+			return Response{StatusNotFound, err}
+		}
+		return Response{StatusInternalServerError, err}
+	}
+
+	return Response{StatusCreated, nil}
 }

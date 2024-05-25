@@ -3,6 +3,8 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/markelca/toggles/pkg/flags"
 )
 
 type ActionType int
@@ -32,6 +34,16 @@ type Action struct {
 	Type  ActionType `json:"action"`
 	Flag  *string    `json:"flag"`
 	Value *bool      `json:"value"`
+}
+
+func (a Action) toFlag() (*flags.Flag, error) {
+	if a.Flag == nil {
+		return nil, fmt.Errorf("Flag is required")
+	}
+	if a.Value == nil {
+		return nil, fmt.Errorf("Value is required")
+	}
+	return &flags.Flag{Name: *a.Flag, Value: *a.Value}, nil
 }
 
 func (a Action) String() string {
