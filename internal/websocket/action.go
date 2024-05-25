@@ -36,6 +36,34 @@ type Action struct {
 	Value *bool      `json:"value"`
 }
 
+func (at *ActionType) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	switch str {
+	case "get":
+		*at = ActionTypeGet
+	case "update":
+		*at = ActionTypeUpdate
+	case "create":
+		*at = ActionTypeCreate
+	case "delete":
+		*at = ActionTypeDelete
+	default:
+		return fmt.Errorf("Invalid ActionType (%v)", str)
+	}
+	return nil
+}
+
+func (at ActionType) MarshalJSON() ([]byte, error) {
+	str, err := at.String()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(str)
+}
+
 func (a Action) toFlag() (*flags.Flag, error) {
 	if a.Flag == nil {
 		return nil, fmt.Errorf("Flag is required")

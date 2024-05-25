@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 
 	"github.com/markelca/toggles/pkg/flags"
@@ -19,6 +20,7 @@ type ControllerV2 struct {
 }
 
 func (controller ControllerV2) HandleMessage(message []byte, c *Client) {
+	log.Println(message)
 	var action Action
 	c.actionMarshaller.Unmarshal(message, &action)
 	// action.Type =
