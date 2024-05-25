@@ -85,8 +85,7 @@ func (controller ControllerV2) GetV2(action *Action) Response {
 }
 
 func (controller ControllerV2) Delete(action *Action) Response {
-	key := fmt.Sprintf("%v", action.Flag)
-	err := controller.FlagService.Delete(key)
+	err := controller.FlagService.Delete(*action.Flag)
 	if err != nil {
 		if err == flags.ErrFlagNotFound {
 			return Response{StatusNotFound, nil}
