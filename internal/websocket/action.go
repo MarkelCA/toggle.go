@@ -8,36 +8,36 @@ import (
 type ActionType int
 
 const (
-	Get ActionType = iota
-	Update
-	Create
-	Delete
+	ActionTypeGet ActionType = iota
+	ActionTypeUpdate
+	ActionTypeCreate
+	ActionTypeDelete
 )
 
 func (a ActionType) String() (string, error) {
 	switch a {
-	case Get:
+	case ActionTypeGet:
 		return "get", nil
-	case Update:
+	case ActionTypeUpdate:
 		return "update", nil
-	case Create:
+	case ActionTypeCreate:
 		return "create", nil
-	case Delete:
+	case ActionTypeDelete:
 		return "delete", nil
 	}
 	return "", fmt.Errorf("ActionType not found (%v)", a)
 }
 
 type Action struct {
-	Action ActionType `json:"action"`
-	Flag   *string    `json:"flag"`
-	Value  *bool      `json:"value"`
+	Type  ActionType `json:"action"`
+	Flag  *string    `json:"flag"`
+	Value *bool      `json:"value"`
 }
 
 func (a Action) String() string {
 	str, err := json.Marshal(a)
 	if err != nil {
-		return fmt.Sprintf("{\"action\": %v, \"flag\": %v, \"value\": %v}", a.Action, a.Flag, a.Value)
+		return fmt.Sprintf("{\"type\": %v, \"flag\": %v, \"value\": %v}", a.Type, a.Flag, a.Value)
 	}
 	return string(str)
 }

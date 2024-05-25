@@ -30,7 +30,7 @@ func Init() error {
 	cacheClient := storage.NewRedisClient(params.RedisHost, params.RedisPort)
 	flagService := flags.NewFlagService(cacheClient, database)
 
-	controller := websocket.WSController{FlagService: flagService, CacheClient: cacheClient}
+	controller := websocket.ControllerV2{FlagService: flagService, CacheClient: cacheClient}
 
 	hub := websocket.NewHub()
 	go hub.Run()

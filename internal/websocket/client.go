@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -39,7 +38,7 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	hub        *Hub
 	conn       *websocket.Conn
-	controller WSController
+	controller Controller
 	// Buffered channel of outbound messages.
 	send             chan []byte
 	actionMarshaller ActionMarshaller
@@ -73,34 +72,8 @@ func (c *Client) readPump() {
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
-		c.handleMessage(message)
+		c.controller.HandleMessage(message, c)
 	}
-}
-
-func (c *Client) handleMessage(message []byte) {
-	var action Action
-	c.actionMarshaller.Unmarshal(message, &action)
-	fmt.Println(action)
-	r := c.controller.RunAction(&action)
-	responseBytes, _ := json.Marshal(r)
-	clientResponse := ClientResponse{c, responseBytes}
-	c.hub.response <- clientResponse
-
-	// r := c.controller.RunCommand(&action)
-	// responseBytes, err := c.actionMarshaller.Marshal(r)
-
-	// if err != nil {
-	// 	slog.Error(err.Error())
-	// 	return
-	// }
-	//
-	//	if cmd.Command == CommandTypeUpdate {
-	//		c.hub.broadcast <- responseBytes
-	//	} else {
-	//
-	//		response := ClientResponse{c, responseBytes}
-	//		c.hub.response <- response
-	//	}
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -150,7 +123,7 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, c WSController, w http.ResponseWriter, r *http.Request, am ActionMarshaller) {
+func ServeWs(hub *Hub, c Controller, w http.ResponseWriter, r *http.Request, am ActionMarshaller) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Info(fmt.Sprint(err))
