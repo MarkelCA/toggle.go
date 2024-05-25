@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -8,77 +9,97 @@ import (
 	"github.com/markelca/toggles/pkg/storage"
 )
 
-type WSController struct {
+type Controller interface {
+	HandleMessage(message []byte, client *Client)
+}
+
+type ControllerV2 struct {
 	FlagService flags.FlagService
 	CacheClient storage.CacheClient
 }
 
-func (ws WSController) Update(cmd *Command) Response {
-	flag, err := flags.ParseFlag(cmd.Data)
+func (controller ControllerV2) HandleMessage(message []byte, c *Client) {
+	var action Action
+	c.actionMarshaller.Unmarshal(message, &action)
+
+	r := controller.RunAction(&action)
+
+	responseBytes, err := json.Marshal(r)
+
 	if err != nil {
-		return Response{StatusInternalServerError, err}
-	}
-	err = ws.FlagService.Update(flag.Name, flag.Value)
-	if err != nil {
-		if err == flags.ErrFlagNotFound {
-			return Response{StatusNotFound, err}
-		}
-		return Response{StatusInternalServerError, err}
+		slog.Error(err.Error())
+		return
 	}
 
-	return Response{StatusCreated, nil}
+	if action.Type == ActionTypeUpdate {
+		c.hub.broadcast <- responseBytes
+	} else {
+		clientResponse := ClientResponse{c, responseBytes}
+		c.hub.response <- clientResponse
+	}
 }
 
-func (ws WSController) RunCommand(cmd *Command) Response {
+func (controller ControllerV2) RunAction(action *Action) Response {
 	var response Response
-	switch cmd.Command {
-	case CommandTypeGet:
-		response = ws.Get(cmd)
-	case CommandTypeCreate:
-		response = ws.Create(cmd)
-	case CommandTypeUpdate:
-		response = ws.Update(cmd)
-	case CommandTypeDelete:
-		response = ws.Delete(cmd)
+	switch action.Type {
+	case ActionTypeGet:
+		response = controller.GetV2(action)
+	case ActionTypeUpdate:
+		response = controller.Update(action)
+	case ActionTypeCreate:
+		response = controller.Create(action)
+	case ActionTypeDelete:
+		response = controller.Delete(action)
 	default:
-		msg := fmt.Sprintf("Invalid command (%v)", cmd.Command)
+		msg := fmt.Sprintf("Invalid action type (%v)", action.Type)
 		response = Response{StatusBadRequest, msg}
 	}
 
 	switch response.Status {
 	case StatusInternalServerError:
-		slog.Error(fmt.Sprintf("[Request failed] (%v): %v", cmd.String(), response.String()))
+		slog.Error(fmt.Sprintf("[Request failed] (%v): %v", action.String(), response.String()))
 	default:
-		slog.Info("[Request received] " + cmd.String())
+		slog.Info("[Request received] " + action.String())
 	}
+
 	return response
 }
 
-func (ws WSController) Get(c *Command) Response {
-	if c.Data == nil {
-		flags, err := ws.FlagService.List()
+func (controller ControllerV2) GetV2(action *Action) Response {
+	if action.Flag == nil {
+		flags, err := controller.FlagService.List()
 		if err != nil {
 			return Response{StatusInternalServerError, err}
 		}
 		return Response{StatusSuccess, flags}
 	}
-	key := c.Data.(string)
-	value, err := ws.FlagService.Get(key)
+	flag, err := controller.FlagService.Get(*action.Flag)
 	if err != nil {
 		if err == flags.ErrFlagNotFound {
 			return Response{StatusNotFound, err}
 		}
 		return Response{StatusInternalServerError, err}
 	}
-	return Response{StatusSuccess, value}
+	return Response{StatusSuccess, flag}
 }
 
-func (ws WSController) Create(cmd *Command) Response {
-	flag, err := flags.ParseFlag(cmd.Data)
+func (controller ControllerV2) Delete(action *Action) Response {
+	err := controller.FlagService.Delete(*action.Flag)
 	if err != nil {
-		return Response{StatusInternalServerError, err}
+		if err == flags.ErrFlagNotFound {
+			return Response{StatusNotFound, nil}
+		}
+		return Response{StatusInternalServerError, nil}
 	}
-	err = ws.FlagService.Create(*flag)
+	return Response{StatusSuccess, nil}
+}
+
+func (controller ControllerV2) Create(action *Action) Response {
+	flag, err := action.toFlag()
+	if err != nil {
+		return Response{StatusBadRequest, err}
+	}
+	err = controller.FlagService.Create(*flag)
 	if err != nil {
 		if err == flags.ErrFlagAlreadyExists {
 			return Response{StatusConflict, err}
@@ -88,14 +109,18 @@ func (ws WSController) Create(cmd *Command) Response {
 	return Response{StatusCreated, flag}
 }
 
-func (ws WSController) Delete(cmd *Command) Response {
-	key := fmt.Sprintf("%v", cmd.Data)
-	err := ws.FlagService.Delete(key)
+func (controller ControllerV2) Update(action *Action) Response {
+	flag, err := action.toFlag()
+	if err != nil {
+		return Response{StatusBadRequest, err}
+	}
+	err = controller.FlagService.Update(flag.Name, flag.Value)
 	if err != nil {
 		if err == flags.ErrFlagNotFound {
-			return Response{StatusNotFound, nil}
+			return Response{StatusNotFound, err}
 		}
-		return Response{StatusInternalServerError, nil}
+		return Response{StatusInternalServerError, err}
 	}
-	return Response{StatusSuccess, nil}
+
+	return Response{StatusCreated, nil}
 }
