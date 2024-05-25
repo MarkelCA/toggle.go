@@ -30,11 +30,11 @@ func Init() error {
 	cacheClient := storage.NewRedisClient(params.RedisHost, params.RedisPort)
 	flagService := flags.NewFlagService(cacheClient, database)
 
-	controller := websocket.ControllerV2{FlagService: flagService, CacheClient: cacheClient}
-
 	hub := websocket.NewHub()
 	go hub.Run()
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+
+	http.HandleFunc("/v1", func(w http.ResponseWriter, r *http.Request) {
+		controller := websocket.ControllerV2{FlagService: flagService, CacheClient: cacheClient}
 		actionMarshaller := websocket.JsonMarshaller{}
 		websocket.ServeWs(hub, controller, w, r, actionMarshaller)
 	})

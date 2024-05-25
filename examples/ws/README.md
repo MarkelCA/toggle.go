@@ -8,7 +8,7 @@ Using the [`websocat`](https://github.com/vi/websocat) utility. Each one of the 
 
 Connect to websocket + get a flag value:
 ```bash
-websocat ws://127.0.0.1:3000/ws
+websocat ws://127.0.0.1:3000/v1
 ```
 Get a flag value (non existent):
 ```
