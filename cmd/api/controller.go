@@ -41,10 +41,10 @@ func (fc FlagController) GetFlag(c *gin.Context) {
 	value, err := fc.service.Get(key)
 
 	if err == flags.ErrFlagNotFound {
-		c.JSON(http.StatusNotFound, nil)
+		c.Status(http.StatusNotFound)
 		return
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, nil)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
