@@ -23,6 +23,7 @@ type User struct {
 	UserName  string
 	FirstName string
 	LastName  string
+	Role      string
 }
 
 func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
@@ -34,7 +35,7 @@ func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	}
 }
 
-func initParams() *jwt.GinJWTMiddleware {
+func newAuthMiddleware(role string) *jwt.GinJWTMiddleware {
 
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test zone",
@@ -46,7 +47,7 @@ func initParams() *jwt.GinJWTMiddleware {
 
 		IdentityHandler: identityHandler(),
 		Authenticator:   authenticator(),
-		Authorizator:    authorizator(),
+		Authorizator:    authorizator(role),
 		Unauthorized:    unauthorized(),
 		TokenLookup:     "header: Authorization, query: token, cookie: jwt",
 		// TokenLookup: "query:token",
@@ -70,9 +71,8 @@ func payloadFunc() func(data interface{}) jwt.MapClaims {
 func identityHandler() func(c *gin.Context) interface{} {
 	return func(c *gin.Context) interface{} {
 		claims := jwt.ExtractClaims(c)
-		return &User{
-			UserName: claims[identityKey].(string),
-		}
+		u := users[claims[identityKey].(string)]
+		return &u
 	}
 }
 
@@ -96,9 +96,9 @@ func authenticator() func(c *gin.Context) (interface{}, error) {
 	}
 }
 
-func authorizator() func(data interface{}, c *gin.Context) bool {
+func authorizator(role string) func(data interface{}, c *gin.Context) bool {
 	return func(data interface{}, c *gin.Context) bool {
-		if v, ok := data.(*User); ok && v.UserName == "admin" {
+		if v, ok := data.(*User); ok && v.Role == role {
 			return true
 		}
 		return false

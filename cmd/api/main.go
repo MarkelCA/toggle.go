@@ -15,6 +15,7 @@ import (
 )
 
 var startTime time.Time // Used to calculate uptime
+var users map[string]User
 
 func init() {
 	startTime = time.Now()
@@ -22,6 +23,17 @@ func init() {
 	if port == "" {
 		port = "3000"
 	}
+
+	users = make(map[string]User)
+	users["admin"] = User{
+		UserName: "admin",
+		Role:     "admin",
+	}
+	users["test"] = User{
+		UserName: "test",
+		Role:     "user",
+	}
+
 }
 func uptime() time.Duration {
 	return time.Since(startTime)
@@ -30,16 +42,20 @@ func uptime() time.Duration {
 func main() {
 	engine := gin.Default()
 	// the jwt middleware
-	authMiddleware, err := jwt.New(initParams())
+	adminMiddleware, err := jwt.New(newAuthMiddleware("admin"))
+	if err != nil {
+		log.Fatal("JWT Error:" + err.Error())
+	}
+	userMiddleware, err := jwt.New(newAuthMiddleware("user"))
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
 
 	// register middleware
-	engine.Use(handlerMiddleWare(authMiddleware))
+	engine.Use(handlerMiddleWare(adminMiddleware))
 
 	// register route
-	registerRoute(engine, authMiddleware)
+	registerRoute(engine, adminMiddleware, userMiddleware)
 
 	// start http server
 	if err = http.ListenAndServe(":"+port, engine); err != nil {
@@ -47,14 +63,15 @@ func main() {
 	}
 }
 
-func registerRoute(r *gin.Engine, handle *jwt.GinJWTMiddleware) {
+func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandler *jwt.GinJWTMiddleware) {
 	r.GET("/health-check", healthHandler)
-	r.POST("/login", handle.LoginHandler)
-	r.NoRoute(handle.MiddlewareFunc(), handleNoRoute())
+	r.POST("/login", adminHandler.LoginHandler)
+	r.NoRoute(adminHandler.MiddlewareFunc(), handleNoRoute())
 
-	auth := r.Group("/", handle.MiddlewareFunc())
-	auth.GET("/refresh_token", handle.RefreshHandler)
-	auth.GET("/me", meHandler)
+	auth := r.Group("/", adminHandler.MiddlewareFunc())
+	auth.GET("/refresh_token", adminHandler.RefreshHandler)
+
+	r.GET("/me", userHandler.MiddlewareFunc(), meHandler)
 
 	params, paramErr := envs.GetConnectionParams()
 	if len(paramErr) > 0 {
@@ -101,5 +118,6 @@ func meHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"userID":   claims[identityKey],
 		"userName": user.(*User).UserName,
+		"role":     user.(*User).Role,
 	})
 }
