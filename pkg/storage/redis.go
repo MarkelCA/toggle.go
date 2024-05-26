@@ -45,7 +45,7 @@ func (r RedisClient) Expire(key string, expiration time.Duration) error {
 	return r.client.Expire(ctx, key, expiration).Err()
 }
 
-func (r RedisClient) Set(key string, value interface{}, expiration time.Duration) error {
+func (r RedisClient) Set(key string, value any, expiration time.Duration) error {
 	return r.client.Set(ctx, key, value, expiration).Err()
 }
 

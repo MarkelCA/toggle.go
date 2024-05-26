@@ -14,7 +14,7 @@ var ctx = context.Background()
 type FlagRepository interface {
 	Get(key string) (bool, error)
 	Exists(name string) (bool, error)
-	Set(key string, value interface{}) error
+	Set(key string, value any) error
 	List() ([]Flag, error)
 	Delete(name string) error
 }
@@ -66,7 +66,7 @@ func (repository FlagMongoRepository) Get(key string) (bool, error) {
 	return f.Value, nil
 }
 
-func (repository FlagMongoRepository) Set(key string, value interface{}) error {
+func (repository FlagMongoRepository) Set(key string, value any) error {
 	filter := bson.D{{"name", key}}
 	update := bson.D{{"$set", bson.D{{"value", value}}}}
 	opts := options.Update().SetUpsert(true)

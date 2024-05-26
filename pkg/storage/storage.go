@@ -13,13 +13,13 @@ type KeyValueStore interface {
 
 type CacheClient interface {
 	KeyValueStore
-	Set(key string, value interface{}, expiration time.Duration) error
+	Set(key string, value any, expiration time.Duration) error
 	Expire(key string, expiration time.Duration) error
 }
 
 type KeyValueDBClient interface {
 	KeyValueStore
-	Set(key string, value interface{}) error
+	Set(key string, value any) error
 }
 
 // //////////

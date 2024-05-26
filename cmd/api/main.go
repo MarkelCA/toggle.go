@@ -12,10 +12,11 @@ import (
 	"github.com/markelca/toggles/internal/envs"
 	"github.com/markelca/toggles/pkg/flags"
 	"github.com/markelca/toggles/pkg/storage"
+	"github.com/markelca/toggles/pkg/user"
 )
 
 var startTime time.Time // Used to calculate uptime
-var users map[string]User
+var users map[string]user.User
 
 func init() {
 	startTime = time.Now()
@@ -24,12 +25,12 @@ func init() {
 		port = "3000"
 	}
 
-	users = make(map[string]User)
-	users["admin"] = User{
+	users = make(map[string]user.User)
+	users["admin"] = user.User{
 		UserName: "admin",
 		Role:     "admin",
 	}
-	users["test"] = User{
+	users["test"] = user.User{
 		UserName: "test",
 		Role:     "user",
 	}
@@ -121,10 +122,10 @@ func healthHandler(c *gin.Context) {
 
 func meHandler(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
-	user, _ := c.Get(identityKey)
+	u, _ := c.Get(identityKey)
 	c.JSON(200, gin.H{
 		"userID":   claims[identityKey],
-		"userName": user.(*User).UserName,
-		"role":     user.(*User).Role,
+		"userName": u.(*user.User).UserName,
+		"role":     u.(*user.User).Role,
 	})
 }

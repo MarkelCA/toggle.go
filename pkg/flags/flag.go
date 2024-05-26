@@ -9,7 +9,7 @@ type Flag struct {
 	Value bool   `json:"value"`
 }
 
-func ParseFlag(data interface{}) (*Flag, error) {
+func ParseFlag(data any) (*Flag, error) {
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return nil, err

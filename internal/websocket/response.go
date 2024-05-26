@@ -19,8 +19,8 @@ const (
 )
 
 type Response struct {
-	Status Status      `json:"status"`
-	Value  interface{} `json:"value"`
+	Status Status `json:"status"`
+	Value  any    `json:"value"`
 }
 
 func (r Response) String() string {

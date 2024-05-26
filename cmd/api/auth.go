@@ -6,6 +6,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/markelca/toggles/pkg/user"
 )
 
 type login struct {
@@ -19,12 +20,6 @@ var (
 )
 
 // User demo
-type User struct {
-	UserName  string
-	FirstName string
-	LastName  string
-	Role      string
-}
 
 func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	return func(context *gin.Context) {
@@ -57,9 +52,9 @@ func newAuthMiddleware(role string) *jwt.GinJWTMiddleware {
 	}
 }
 
-func payloadFunc() func(data interface{}) jwt.MapClaims {
-	return func(data interface{}) jwt.MapClaims {
-		if v, ok := data.(*User); ok {
+func payloadFunc() func(data any) jwt.MapClaims {
+	return func(data any) jwt.MapClaims {
+		if v, ok := data.(*user.User); ok {
 			return jwt.MapClaims{
 				identityKey: v.UserName,
 			}
@@ -68,16 +63,16 @@ func payloadFunc() func(data interface{}) jwt.MapClaims {
 	}
 }
 
-func identityHandler() func(c *gin.Context) interface{} {
-	return func(c *gin.Context) interface{} {
+func identityHandler() func(c *gin.Context) any {
+	return func(c *gin.Context) any {
 		claims := jwt.ExtractClaims(c)
 		u := users[claims[identityKey].(string)]
 		return &u
 	}
 }
 
-func authenticator() func(c *gin.Context) (interface{}, error) {
-	return func(c *gin.Context) (interface{}, error) {
+func authenticator() func(c *gin.Context) (any, error) {
+	return func(c *gin.Context) (any, error) {
 		var loginVals login
 		if err := c.ShouldBind(&loginVals); err != nil {
 			return "", jwt.ErrMissingLoginValues
@@ -86,7 +81,7 @@ func authenticator() func(c *gin.Context) (interface{}, error) {
 		password := loginVals.Password
 
 		if (userID == "admin" && password == "admin") || (userID == "test" && password == "test") {
-			return &User{
+			return &user.User{
 				UserName:  userID,
 				LastName:  "Bo-Yi",
 				FirstName: "Wu",
@@ -96,9 +91,9 @@ func authenticator() func(c *gin.Context) (interface{}, error) {
 	}
 }
 
-func authorizator(role string) func(data interface{}, c *gin.Context) bool {
-	return func(data interface{}, c *gin.Context) bool {
-		if v, ok := data.(*User); ok && v.Role == role {
+func authorizator(role string) func(data any, c *gin.Context) bool {
+	return func(data any, c *gin.Context) bool {
+		if v, ok := data.(*user.User); ok && v.Role == role {
 			return true
 		}
 		return false
