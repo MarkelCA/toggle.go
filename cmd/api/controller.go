@@ -17,14 +17,12 @@ func NewFlagController(r flags.FlagService) FlagController {
 	return FlagController{r}
 }
 
-func (fc FlagController) Init(host string) {
-	r := gin.Default()
+func (fc FlagController) RegisterRoutes(r gin.IRouter) {
 	r.GET("/flags", fc.ListFlags)
 	r.GET("/flags/:flagid", fc.GetFlag)
 	r.PUT("/flags/:flagid", fc.UpdateFlag)
 	r.POST("/flags", fc.CreateFlag)
 	r.DELETE("/flags/:flagid", fc.DeleteFlag)
-	r.Run(host)
 }
 
 func (fc FlagController) ListFlags(c *gin.Context) {
