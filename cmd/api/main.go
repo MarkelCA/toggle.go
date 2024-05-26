@@ -64,15 +64,6 @@ func main() {
 }
 
 func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandler *jwt.GinJWTMiddleware) {
-	r.GET("/health-check", healthHandler)
-	r.POST("/login", adminHandler.LoginHandler)
-	r.NoRoute(adminHandler.MiddlewareFunc(), handleNoRoute())
-
-	auth := r.Group("/", adminHandler.MiddlewareFunc())
-	auth.GET("/refresh_token", adminHandler.RefreshHandler)
-
-	r.GET("/me", userHandler.MiddlewareFunc(), meHandler)
-
 	params, paramErr := envs.GetConnectionParams()
 	if len(paramErr) > 0 {
 		errMsg := "Param errors have been found:\n"
@@ -92,7 +83,23 @@ func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandle
 	service := flags.NewFlagService(repository, db)
 	controller := NewFlagController(service)
 
-	controller.RegisterRoutes(auth)
+	r.NoRoute(handleNoRoute())
+	r.GET("/health-check", healthHandler)
+	r.POST("/login", adminHandler.LoginHandler)
+
+	r.GET("/me", userHandler.MiddlewareFunc(), meHandler)
+
+	auth := r.Group("/", adminHandler.MiddlewareFunc())
+	auth.GET("/refresh_token", adminHandler.RefreshHandler)
+
+	flagsUser := r.Group("/flags", userHandler.MiddlewareFunc())
+	flagsUser.GET("", controller.ListFlags)
+	flagsUser.GET("/:flagid", controller.GetFlag)
+
+	flagsAdmin := r.Group("/flags", adminHandler.MiddlewareFunc())
+	flagsAdmin.PUT("/:flagid", controller.UpdateFlag)
+	flagsAdmin.POST("", controller.CreateFlag)
+	flagsAdmin.DELETE("/:flagid", controller.DeleteFlag)
 
 }
 
