@@ -30,7 +30,7 @@ func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	}
 }
 
-func newAuthMiddleware(role string) *jwt.GinJWTMiddleware {
+func newAuthMiddleware(role string, userRepo user.UserRepository) *jwt.GinJWTMiddleware {
 
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test zone",
@@ -40,7 +40,7 @@ func newAuthMiddleware(role string) *jwt.GinJWTMiddleware {
 		IdentityKey: identityKey,
 		PayloadFunc: payloadFunc(),
 
-		IdentityHandler: identityHandler(),
+		IdentityHandler: identityHandler(userRepo),
 		Authenticator:   authenticator(),
 		Authorizator:    authorizator(role),
 		Unauthorized:    unauthorized(),
@@ -63,11 +63,18 @@ func payloadFunc() func(data any) jwt.MapClaims {
 	}
 }
 
-func identityHandler() func(c *gin.Context) any {
+func identityHandler(user.UserRepository) func(c *gin.Context) any {
 	return func(c *gin.Context) any {
 		claims := jwt.ExtractClaims(c)
-		u := users[claims[identityKey].(string)]
-		return &u
+
+		username := claims[identityKey].(string)
+		mongoUser, err := userRepo.FindByUserName(username)
+
+		if err != nil {
+			return nil
+		}
+
+		return mongoUser
 	}
 }
 

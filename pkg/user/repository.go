@@ -14,8 +14,9 @@ var ctx = context.Background()
 type UserRepository interface {
 	FindAll() ([]*User, error)
 	FindByUserName(userName string) (*User, error)
-	Create(user *User) error
+	Create(user User) error
 	Update(user *User) error
+	Upsert(user User) error
 }
 
 type UserMongoRepository struct {
@@ -28,8 +29,13 @@ func NewUserMongoRepository(host string, port uint) (UserRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	collection := client.Database("toggles").Collection("flags")
+	collection := client.Database("toggles").Collection("users")
 	return UserMongoRepository{collection}, nil
+}
+
+func (repository UserMongoRepository) Upsert(user User) error {
+	_, err := repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user, options.Replace().SetUpsert(true))
+	return err
 }
 
 func (repository UserMongoRepository) FindAll() ([]*User, error) {
@@ -63,7 +69,7 @@ func (repository UserMongoRepository) FindByUserName(userName string) (*User, er
 	return &user, nil
 }
 
-func (repository UserMongoRepository) Create(user *User) error {
+func (repository UserMongoRepository) Create(user User) error {
 	_, err := repository.collection.InsertOne(ctx, user)
 	return err
 }

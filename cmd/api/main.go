@@ -17,8 +17,21 @@ import (
 
 var startTime time.Time // Used to calculate uptime
 var users map[string]user.User
+var params *envs.ConnectionParams
+var userRepo user.UserRepository
 
 func init() {
+	var paramErr []error
+	params, paramErr = envs.GetConnectionParams()
+	if len(paramErr) > 0 {
+		errMsg := "Param errors have been found:\n"
+		for _, err := range paramErr {
+			errMsg += fmt.Sprintf("  - %v\n", err.Error())
+		}
+		log.Fatal(errMsg)
+	}
+
+	// repository := storage.NewMemoryRepository()
 	startTime = time.Now()
 	port = os.Getenv("PORT")
 	if port == "" {
@@ -35,6 +48,20 @@ func init() {
 		Role:     "user",
 	}
 
+	var err error
+	userRepo, err = user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
+	}
+	userRepo.Upsert(user.User{
+		UserName: "admin",
+		Role:     "admin",
+	})
+	userRepo.Upsert(user.User{
+		UserName: "test",
+		Role:     "user",
+	})
+
 }
 func uptime() time.Duration {
 	return time.Since(startTime)
@@ -43,11 +70,11 @@ func uptime() time.Duration {
 func main() {
 	engine := gin.Default()
 	// the jwt middleware
-	adminMiddleware, err := jwt.New(newAuthMiddleware("admin"))
+	adminMiddleware, err := jwt.New(newAuthMiddleware("admin", userRepo))
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
-	userMiddleware, err := jwt.New(newAuthMiddleware("user"))
+	userMiddleware, err := jwt.New(newAuthMiddleware("user", userRepo))
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
@@ -65,16 +92,6 @@ func main() {
 }
 
 func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandler *jwt.GinJWTMiddleware) {
-	params, paramErr := envs.GetConnectionParams()
-	if len(paramErr) > 0 {
-		errMsg := "Param errors have been found:\n"
-		for _, err := range paramErr {
-			errMsg += fmt.Sprintf("  - %v\n", err.Error())
-		}
-		log.Fatal(errMsg)
-	}
-
-	// repository := storage.NewMemoryRepository()
 	db, err := flags.NewFlagMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
