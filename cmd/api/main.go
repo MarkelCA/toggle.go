@@ -38,16 +38,6 @@ func init() {
 		port = "3000"
 	}
 
-	users = make(map[string]user.User)
-	users["admin"] = user.User{
-		UserName: "admin",
-		Role:     "admin",
-	}
-	users["test"] = user.User{
-		UserName: "test",
-		Role:     "user",
-	}
-
 	var err error
 	userRepo, err = user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
@@ -86,7 +76,8 @@ func main() {
 	registerRoute(engine, adminMiddleware, userMiddleware)
 
 	// start http server
-	if err = http.ListenAndServe(":"+port, engine); err != nil {
+	// if err = http.ListenAndServe(":"+port, engine); err != nil {
+	if err = http.ListenAndServeTLS(":"+port, "./testdata/server.crt", "./testdata/server.key", engine); err != nil {
 		log.Fatal(err)
 	}
 }

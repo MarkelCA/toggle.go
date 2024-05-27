@@ -15,5 +15,6 @@ RUN CGO_ENABLED=0 go build -v -a -installsuffix cgo  -o app cmd/${APP}/*.go
 
 FROM alpine:latest  
 WORKDIR /root/
+COPY --from=builder /usr/src/app/cmd/api/testdata ./testdata
 COPY --from=builder /usr/src/app/app ./
 CMD ["./app"]

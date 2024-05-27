@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var ctx = context.Background()
@@ -17,6 +18,7 @@ type UserRepository interface {
 	Create(user User) error
 	Update(user *User) error
 	Upsert(user User) error
+	Authenticate(userName, password string) (*User, error)
 }
 
 type UserMongoRepository struct {
@@ -77,4 +79,24 @@ func (repository UserMongoRepository) Create(user User) error {
 func (repository UserMongoRepository) Update(user *User) error {
 	_, err := repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user)
 	return err
+}
+
+func (repository UserMongoRepository) Authenticate(userName, password string) (*User, error) {
+	x := repository.collection.FindOne(ctx, bson.D{{Key: "username", Value: userName}, {Key: "password", Value: password}})
+	var user User
+	err := x.Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
