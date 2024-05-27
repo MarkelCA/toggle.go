@@ -76,8 +76,7 @@ func main() {
 	registerRoute(engine, adminMiddleware, userMiddleware)
 
 	// start http server
-	// if err = http.ListenAndServe(":"+port, engine); err != nil {
-	if err = http.ListenAndServeTLS(":"+port, "./testdata/server.crt", "./testdata/server.key", engine); err != nil {
+	if err = http.ListenAndServeTLS(":"+port, "./testdata/selfsigned.crt", "./testdata/selfsigned.key", engine); err != nil {
 		log.Fatal(err)
 	}
 }
