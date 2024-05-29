@@ -24,11 +24,7 @@ func init() {
 	var paramErr []error
 	params, paramErr = envs.GetConnectionParams()
 	if len(paramErr) > 0 {
-		errMsg := "Param errors have been found:\n"
-		for _, err := range paramErr {
-			errMsg += fmt.Sprintf("  - %v\n", err.Error())
-		}
-		log.Fatal(errMsg)
+		envs.PrintFatalErrors(paramErr)
 	}
 
 	// repository := storage.NewMemoryRepository()
@@ -43,17 +39,6 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
-	userRepo.Upsert(user.User{
-		UserName: "admin",
-		Role:     "admin",
-		Password: "admin",
-	})
-	userRepo.Upsert(user.User{
-		UserName: "test",
-		Role:     "user",
-		Password: "test",
-	})
-
 }
 func uptime() time.Duration {
 	return time.Since(startTime)

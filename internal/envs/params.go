@@ -2,6 +2,7 @@ package envs
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strconv"
@@ -85,4 +86,12 @@ func GetConnectionParams() (*ConnectionParams, []error) {
 		return connParams, nil
 	}
 
+}
+
+func PrintFatalErrors(errors []error) {
+	errMsg := "Param errors have been found:\n"
+	for _, err := range errors {
+		errMsg += fmt.Sprintf("  - %v\n", err.Error())
+	}
+	log.Fatal(errMsg)
 }

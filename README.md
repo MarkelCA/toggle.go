@@ -1,5 +1,5 @@
 # toggles
-Toggles it's a feature flags application made in Go. It uses mongodb as disk storage and redis for flag value's cache management. Counts with implementations as a REST API and as a Websocket server. There's also plans to build SDKs soon.
+Toggles is a feature flags engine made in Go. Its default implementation uses MongoDB for disk storage and Redis for flag value cache management. It includes implementations as a REST API, WebSocket server, and CLI tool. There are also plans to build SDKs soon.
 
 # Configure
 In this step you'll be able to configure the port where the service will run (`APP_PORT`) and the desired implementation (`APP`). The `APP` value should be a folder from `cmd`. Currently there's two options: `api` (rest api) and `ws` (websocket). 
