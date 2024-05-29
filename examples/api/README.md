@@ -2,7 +2,7 @@
 A REST API example to interact with the toggles api.
 
 ## Usage
-Using the `curl` utility. Each one of the examples consist on a command followed by the response given by the REST server. The server uses a self-signed certificate, so the `-k` flag is used to skip the certificate validation.
+Using the `curl` utility. Each one of the examples consist on a command followed by the response given by the REST server. This example uses a self-signed certificate for the TLS encryption, so the `-k` flag is used to skip the certificate validation.
 
 *The output of the following commands could not be the same as the one shown here, it'll depend on the flags stored on your database. The server URL will also depend on four dotenv configurations. Check the [configuration docs](https://github.com/MarkelCA/toggles/blob/main/README.md#configure) for more info*
 ### Authentication
