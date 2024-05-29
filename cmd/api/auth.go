@@ -41,7 +41,7 @@ func newAuthMiddleware(role string, userRepo user.UserRepository) *jwt.GinJWTMid
 		PayloadFunc: payloadFunc(),
 
 		IdentityHandler: identityHandler(userRepo),
-		Authenticator:   authenticator(),
+		Authenticator:   authenticator(userRepo),
 		Authorizator:    authorizator(role),
 		Unauthorized:    unauthorized(),
 		TokenLookup:     "header: Authorization, query: token, cookie: jwt",
@@ -78,7 +78,7 @@ func identityHandler(user.UserRepository) func(c *gin.Context) any {
 	}
 }
 
-func authenticator() func(c *gin.Context) (any, error) {
+func authenticator(repository user.UserRepository) func(c *gin.Context) (any, error) {
 	return func(c *gin.Context) (any, error) {
 		var loginVals login
 		if err := c.ShouldBind(&loginVals); err != nil {
@@ -87,14 +87,15 @@ func authenticator() func(c *gin.Context) (any, error) {
 		userID := loginVals.Username
 		password := loginVals.Password
 
-		if (userID == "admin" && password == "admin") || (userID == "test" && password == "test") {
-			return &user.User{
-				UserName:  userID,
-				LastName:  "Bo-Yi",
-				FirstName: "Wu",
-			}, nil
+		u, err := repository.Authenticate(userID, password)
+		if err != nil {
+			if err == user.ErrUserAuthenticationFailed {
+				return nil, jwt.ErrFailedAuthentication
+			}
+			return nil, err
 		}
-		return nil, jwt.ErrFailedAuthentication
+
+		return u, nil
 	}
 }
 

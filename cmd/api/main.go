@@ -46,10 +46,12 @@ func init() {
 	userRepo.Upsert(user.User{
 		UserName: "admin",
 		Role:     "admin",
+		Password: "admin",
 	})
 	userRepo.Upsert(user.User{
 		UserName: "test",
 		Role:     "user",
+		Password: "test",
 	})
 
 }

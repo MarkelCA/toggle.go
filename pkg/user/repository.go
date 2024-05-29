@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/markelca/toggles/pkg/hash"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var ctx = context.Background()
@@ -36,7 +36,12 @@ func NewUserMongoRepository(host string, port uint) (UserRepository, error) {
 }
 
 func (repository UserMongoRepository) Upsert(user User) error {
-	_, err := repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user, options.Replace().SetUpsert(true))
+	pwdHash, err := hash.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = pwdHash
+	_, err = repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user, options.Replace().SetUpsert(true))
 	return err
 }
 
@@ -72,7 +77,12 @@ func (repository UserMongoRepository) FindByUserName(userName string) (*User, er
 }
 
 func (repository UserMongoRepository) Create(user User) error {
-	_, err := repository.collection.InsertOne(ctx, user)
+	pwdHash, err := hash.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = pwdHash
+	_, err = repository.collection.InsertOne(ctx, user)
 	return err
 }
 
@@ -82,21 +92,13 @@ func (repository UserMongoRepository) Update(user *User) error {
 }
 
 func (repository UserMongoRepository) Authenticate(userName, password string) (*User, error) {
-	x := repository.collection.FindOne(ctx, bson.D{{Key: "username", Value: userName}, {Key: "password", Value: password}})
-	var user User
-	err := x.Decode(&user)
+	user, err := repository.FindByUserName(userName)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+	if !hash.CheckPasswordHash(password, user.Password) {
+		fmt.Println("check password failed")
+		return nil, ErrUserAuthenticationFailed
+	}
+	return user, nil
 }
