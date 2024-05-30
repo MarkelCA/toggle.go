@@ -1,7 +1,14 @@
-package hash
+package security
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	defaultAPIKeyLength = 32
 )
 
 func HashPassword(password string) (string, error) {
@@ -12,4 +19,12 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func GenerateAPIKey() (string, error) {
+	bytes := make([]byte, defaultAPIKeyLength)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

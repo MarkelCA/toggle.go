@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -80,6 +81,8 @@ func identityHandler(user.UserRepository) func(c *gin.Context) any {
 
 func authenticator(repository user.UserRepository) func(c *gin.Context) (any, error) {
 	return func(c *gin.Context) (any, error) {
+		apiKey := c.GetHeader("X-Api-Key")
+
 		var loginVals login
 		if err := c.ShouldBind(&loginVals); err != nil {
 			return "", jwt.ErrMissingLoginValues
@@ -87,7 +90,7 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 		userID := loginVals.Username
 		password := loginVals.Password
 
-		u, err := repository.Authenticate(userID, password)
+		u, err := repository.Authenticate(userID, password, apiKey)
 		if err != nil {
 			if err == user.ErrUserAuthenticationFailed {
 				return nil, jwt.ErrFailedAuthentication
@@ -101,7 +104,10 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 
 func authorizator(role string) func(data any, c *gin.Context) bool {
 	return func(data any, c *gin.Context) bool {
-		if v, ok := data.(*user.User); ok && v.Role == role {
+		apiKey := c.GetHeader("X-Api-Key")
+		fmt.Println("apiKey", apiKey, data.(*user.User).ApiKey)
+
+		if v, ok := data.(*user.User); ok && v.Role == role && v.ApiKey == apiKey {
 			return true
 		}
 		return false

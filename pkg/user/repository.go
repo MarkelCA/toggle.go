@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/markelca/toggles/pkg/hash"
+	"github.com/markelca/toggles/pkg/security"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,7 +18,7 @@ type UserRepository interface {
 	Create(user User) error
 	Update(user *User) error
 	Upsert(user User) error
-	Authenticate(userName, password string) (*User, error)
+	Authenticate(userName, password, apiKey string) (*User, error)
 }
 
 type UserMongoRepository struct {
@@ -36,12 +36,7 @@ func NewUserMongoRepository(host string, port uint) (UserRepository, error) {
 }
 
 func (repository UserMongoRepository) Upsert(user User) error {
-	pwdHash, err := hash.HashPassword(user.Password)
-	if err != nil {
-		return err
-	}
-	user.Password = pwdHash
-	_, err = repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user, options.Replace().SetUpsert(true))
+	_, err := repository.collection.ReplaceOne(ctx, bson.D{{Key: "username", Value: user.UserName}}, user, options.Replace().SetUpsert(true))
 	return err
 }
 
@@ -77,12 +72,7 @@ func (repository UserMongoRepository) FindByUserName(userName string) (*User, er
 }
 
 func (repository UserMongoRepository) Create(user User) error {
-	pwdHash, err := hash.HashPassword(user.Password)
-	if err != nil {
-		return err
-	}
-	user.Password = pwdHash
-	_, err = repository.collection.InsertOne(ctx, user)
+	_, err := repository.collection.InsertOne(ctx, user)
 	return err
 }
 
@@ -91,14 +81,18 @@ func (repository UserMongoRepository) Update(user *User) error {
 	return err
 }
 
-func (repository UserMongoRepository) Authenticate(userName, password string) (*User, error) {
+func (repository UserMongoRepository) Authenticate(userName, password, apiKey string) (*User, error) {
 	user, err := repository.FindByUserName(userName)
 	if err != nil {
 		return nil, err
 	}
-	if !hash.CheckPasswordHash(password, user.Password) {
-		fmt.Println("check password failed")
+	if !security.CheckPasswordHash(password, user.Password) {
 		return nil, ErrUserAuthenticationFailed
 	}
+
+	if user.ApiKey != apiKey {
+		return nil, ErrApiKeyMismatch
+	}
+
 	return user, nil
 }

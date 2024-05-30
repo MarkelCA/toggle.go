@@ -39,6 +39,25 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
+
+	adminUser, err := user.NewUser("admin", "admin", "admin")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = userRepo.Upsert(*adminUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testUser, err := user.NewUser("test", "user", "test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = userRepo.Upsert(*testUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 func uptime() time.Duration {
 	return time.Since(startTime)
