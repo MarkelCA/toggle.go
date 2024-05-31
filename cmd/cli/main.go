@@ -15,15 +15,11 @@ var rootCmd = &cobra.Command{
 	Use:   "tg",
 	Short: "This is the togggles command line tool",
 	Long:  `This tool offers utilities to interact with the togggles API.`,
-
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("This is the first cobra example")
-	},
 }
 
 var databaseCmd = &cobra.Command{
-	Use: "db",
-	// Short:   "",
+	Use:     "db",
+	Short:   "Database utilities",
 	Aliases: []string{"database"},
 	Args:    cobra.ExactArgs(1),
 }
