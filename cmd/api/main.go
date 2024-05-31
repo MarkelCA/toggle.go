@@ -54,20 +54,16 @@ func uptime() time.Duration {
 func main() {
 	engine := gin.Default()
 	// the jwt middleware
-	adminMiddleware, err := jwt.New(newAuthMiddleware("admin", userRepo))
-	if err != nil {
-		log.Fatal("JWT Error:" + err.Error())
-	}
-	userMiddleware, err := jwt.New(newAuthMiddleware("user", userRepo))
+	authMiddleware, err := jwt.New(newAuthMiddleware(userRepo))
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
 
 	// register middleware
-	engine.Use(handlerMiddleWare(adminMiddleware))
+	engine.Use(handlerMiddleWare(authMiddleware))
 
 	// register route
-	registerRoute(engine, adminMiddleware, userMiddleware)
+	registerRoute(engine, authMiddleware)
 
 	// start http server
 	if err = http.ListenAndServeTLS(":"+port, "./testdata/selfsigned.crt", "./testdata/selfsigned.key", engine); err != nil {
@@ -75,30 +71,31 @@ func main() {
 	}
 }
 
-func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandler *jwt.GinJWTMiddleware) {
+func registerRoute(r *gin.Engine, authMiddleware *jwt.GinJWTMiddleware) {
 	db, err := flags.NewFlagMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
+
+	authMiddlewareFunc := authMiddleware.MiddlewareFunc()
 
 	repository := storage.NewRedisClient(params.RedisHost, params.RedisPort)
 	service := flags.NewFlagService(repository, db)
 	controller := NewFlagController(service)
 
 	r.NoRoute(handleNoRoute())
-	r.GET("/health-check", healthHandler, RouteName("health-check"))
-	r.POST("/login", adminHandler.LoginHandler, RouteName("login"))
+	r.GET("/health-check", RouteName("health-check"), healthHandler)
+	r.POST("/login", authMiddleware.LoginHandler, RouteName("login"))
+	r.GET("/refresh_token", RouteName("refresh_token"), authMiddlewareFunc, authMiddleware.RefreshHandler)
 
-	r.GET("/me", RouteName("get_me"), userHandler.MiddlewareFunc(), meHandler)
-	r.GET("/refresh_token", RouteName("refresh_token"), adminHandler.MiddlewareFunc(), adminHandler.RefreshHandler)
+	r.GET("/me", RouteName("get_me"), authMiddlewareFunc, meHandler)
 
-	r.GET("/flags", RouteName("get_flags"), userHandler.MiddlewareFunc(), controller.ListFlags)
-	r.GET("/flags/:flagid", RouteName("get_flag"), userHandler.MiddlewareFunc(), controller.GetFlag)
+	r.GET("/flags", RouteName("get_flags"), authMiddlewareFunc, controller.ListFlags)
+	r.GET("/flags/:flagid", RouteName("get_flag"), authMiddlewareFunc, controller.GetFlag)
 
-	r.PUT("/flags/:flagid", RouteName("update_flag"), userHandler.MiddlewareFunc(), controller.UpdateFlag)
-	r.POST("/flags", RouteName("create_flag"), userHandler.MiddlewareFunc(), controller.CreateFlag)
-	r.DELETE("/flags/:flagid", RouteName("delete_flag"), userHandler.MiddlewareFunc(), controller.DeleteFlag)
-
+	r.PUT("/flags/:flagid", RouteName("update_flag"), authMiddlewareFunc, controller.UpdateFlag)
+	r.POST("/flags", RouteName("create_flag"), authMiddlewareFunc, controller.CreateFlag)
+	r.DELETE("/flags/:flagid", RouteName("delete_flag"), authMiddlewareFunc, controller.DeleteFlag)
 }
 
 func handleNoRoute() func(c *gin.Context) {

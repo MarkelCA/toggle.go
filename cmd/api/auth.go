@@ -30,7 +30,7 @@ func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	}
 }
 
-func newAuthMiddleware(role string, userRepo user.UserRepository) *jwt.GinJWTMiddleware {
+func newAuthMiddleware(userRepo user.UserRepository) *jwt.GinJWTMiddleware {
 
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test zone",
@@ -42,7 +42,7 @@ func newAuthMiddleware(role string, userRepo user.UserRepository) *jwt.GinJWTMid
 
 		IdentityHandler: identityHandler(userRepo),
 		Authenticator:   authenticator(userRepo),
-		Authorizator:    authorizator(role),
+		Authorizator:    authorizator(userRepo),
 		Unauthorized:    unauthorized(),
 		TokenLookup:     "header: Authorization, query: token, cookie: jwt",
 		// TokenLookup: "query:token",
@@ -101,7 +101,7 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 	}
 }
 
-func authorizator(role string) func(data any, c *gin.Context) bool {
+func authorizator(userRepo user.UserRepository) func(data any, c *gin.Context) bool {
 	return func(data any, c *gin.Context) bool {
 		routeName, ok := c.Get("routeName")
 		if !ok {
