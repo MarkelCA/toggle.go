@@ -19,6 +19,7 @@ type UserRepository interface {
 	Update(user *User) error
 	Upsert(user User) error
 	Authenticate(userName, password, apiKey string) (*User, error)
+	HasPermission(userName, permission string) bool
 }
 
 type UserMongoRepository struct {
@@ -81,6 +82,7 @@ func (repository UserMongoRepository) Update(user *User) error {
 	return err
 }
 
+// NOTE: This should be cached
 func (repository UserMongoRepository) Authenticate(userName, password, apiKey string) (*User, error) {
 	user, err := repository.FindByUserName(userName)
 	if err != nil {
@@ -95,4 +97,18 @@ func (repository UserMongoRepository) Authenticate(userName, password, apiKey st
 	}
 
 	return user, nil
+}
+
+// NOTE: This query should be cached
+func (repository UserMongoRepository) HasPermission(userName, permission string) bool {
+	user, err := repository.FindByUserName(userName)
+	if err != nil {
+		return false
+	}
+	for _, p := range user.Permissions {
+		if p == permission {
+			return true
+		}
+	}
+	return false
 }

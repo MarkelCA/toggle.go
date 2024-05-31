@@ -7,15 +7,16 @@ import (
 )
 
 type User struct {
-	UserName  string
-	FirstName string
-	LastName  string
-	Role      string
-	Password  string
-	ApiKey    string
+	UserName    string
+	FirstName   string
+	LastName    string
+	Role        string
+	Password    string
+	ApiKey      string
+	Permissions []string
 }
 
-func NewUser(userName, role, password string) (*User, error) {
+func NewUser(userName, role, password string, permissions []string) (*User, error) {
 	pwdHash, err := security.HashPassword(password)
 	if err != nil {
 		return nil, err
@@ -25,10 +26,11 @@ func NewUser(userName, role, password string) (*User, error) {
 		return nil, err
 	}
 	return &User{
-		UserName: userName,
-		Role:     role,
-		Password: pwdHash,
-		ApiKey:   apiKey,
+		UserName:    userName,
+		Role:        role,
+		Password:    pwdHash,
+		ApiKey:      apiKey,
+		Permissions: permissions,
 	}, nil
 }
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -104,10 +103,14 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 
 func authorizator(role string) func(data any, c *gin.Context) bool {
 	return func(data any, c *gin.Context) bool {
+		routeName, ok := c.Get("routeName")
+		if !ok {
+			log.Printf("routeName not found for url %s\n", c.Request.URL.Path)
+			return false
+		}
 		apiKey := c.GetHeader("X-Api-Key")
-		fmt.Println("apiKey", apiKey, data.(*user.User).ApiKey)
-
-		if v, ok := data.(*user.User); ok && v.Role == role && v.ApiKey == apiKey {
+		u, ok := data.(*user.User)
+		if ok && u.ApiKey == apiKey && userRepo.HasPermission(u.UserName, routeName.(string)) {
 			return true
 		}
 		return false

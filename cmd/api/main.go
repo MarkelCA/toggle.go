@@ -86,22 +86,18 @@ func registerRoute(r *gin.Engine, adminHandler *jwt.GinJWTMiddleware, userHandle
 	controller := NewFlagController(service)
 
 	r.NoRoute(handleNoRoute())
-	r.GET("/health-check", healthHandler)
-	r.POST("/login", adminHandler.LoginHandler)
+	r.GET("/health-check", healthHandler, RouteName("health-check"))
+	r.POST("/login", adminHandler.LoginHandler, RouteName("login"))
 
-	r.GET("/me", userHandler.MiddlewareFunc(), meHandler)
+	r.GET("/me", RouteName("get_me"), userHandler.MiddlewareFunc(), meHandler)
+	r.GET("/refresh_token", RouteName("refresh_token"), adminHandler.MiddlewareFunc(), adminHandler.RefreshHandler)
 
-	auth := r.Group("/", adminHandler.MiddlewareFunc())
-	auth.GET("/refresh_token", adminHandler.RefreshHandler)
+	r.GET("/flags", RouteName("get_flags"), userHandler.MiddlewareFunc(), controller.ListFlags)
+	r.GET("/flags/:flagid", RouteName("get_flag"), userHandler.MiddlewareFunc(), controller.GetFlag)
 
-	flagsUser := r.Group("/flags", userHandler.MiddlewareFunc())
-	flagsUser.GET("", controller.ListFlags)
-	flagsUser.GET("/:flagid", controller.GetFlag)
-
-	flagsAdmin := r.Group("/flags", adminHandler.MiddlewareFunc())
-	flagsAdmin.PUT("/:flagid", controller.UpdateFlag)
-	flagsAdmin.POST("", controller.CreateFlag)
-	flagsAdmin.DELETE("/:flagid", controller.DeleteFlag)
+	r.PUT("/flags/:flagid", RouteName("update_flag"), userHandler.MiddlewareFunc(), controller.UpdateFlag)
+	r.POST("/flags", RouteName("create_flag"), userHandler.MiddlewareFunc(), controller.CreateFlag)
+	r.DELETE("/flags/:flagid", RouteName("delete_flag"), userHandler.MiddlewareFunc(), controller.DeleteFlag)
 
 }
 
@@ -129,4 +125,10 @@ func meHandler(c *gin.Context) {
 		"userName": u.(*user.User).UserName,
 		"role":     u.(*user.User).Role,
 	})
+}
+func RouteName(name string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("routeName", name)
+		c.Next()
+	}
 }
