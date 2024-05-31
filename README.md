@@ -4,7 +4,7 @@ Toggles is a feature flags engine made in Go. Its default implementation uses Mo
 # Configure
 In this step you'll be able to configure the port where the service will run (`APP_PORT`) and the desired implementation (`APP`). The `APP` value should be a folder from `cmd`. Currently there's two options: `api` (rest api) and `ws` (websocket). 
 ```bash
-cp .env.sample .env
+cp .env.example .env
 ```
 _Example env file:_
 ```env

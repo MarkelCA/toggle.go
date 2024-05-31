@@ -13,7 +13,13 @@ import (
 )
 
 func Init() error {
-	params, paramErr := envs.GetConnectionParams()
+	params, paramErr := envs.GetConnectionParams(envs.EnvNames{
+		AppPort:   "APP_PORT",
+		RedisHost: "REDIS_HOST",
+		RedisPort: "REDIS_PORT",
+		MongoHost: "MONGO_HOST",
+		MongoPort: "MONGO_PORT",
+	})
 	if len(paramErr) > 0 {
 		errMsg := "Param errors have been found:\n"
 		for _, err := range paramErr {

@@ -8,6 +8,23 @@ import (
 	"strconv"
 )
 
+type AppMode int
+
+const (
+	ApiMode AppMode = iota
+	CliMode
+	WSMode
+)
+
+type EnvNames struct {
+	Mode      AppMode
+	AppPort   string
+	RedisHost string
+	RedisPort string
+	MongoHost string
+	MongoPort string
+}
+
 type ConnectionParams struct {
 	AppPort   string
 	RedisHost string
@@ -44,13 +61,13 @@ func validatePort(port string) bool {
 	return portInt > 0 && portInt < 65536
 }
 
-func GetConnectionParams() (*ConnectionParams, []error) {
+func GetConnectionParams(en EnvNames) (*ConnectionParams, []error) {
 	var errors []error
-	appPort := os.Getenv("APP_PORT")
-	if !validatePort(appPort) {
+	appPort := os.Getenv(en.AppPort)
+	if en.Mode != CliMode && !validatePort(appPort) {
 		errors = append(errors, InvalidPortError{port: appPort})
 	}
-	redisHost := os.Getenv("REDIS_HOST")
+	redisHost := os.Getenv(en.RedisHost)
 	redisIPs, err := net.LookupIP(redisHost)
 	if err != nil {
 		errors = append(errors, err)
@@ -59,12 +76,12 @@ func GetConnectionParams() (*ConnectionParams, []error) {
 			errors = append(errors, InvalidHostError{host: redisHost})
 		}
 	}
-	redisPortStr := os.Getenv("REDIS_PORT")
+	redisPortStr := os.Getenv(en.RedisPort)
 	redisPort, err := strconv.Atoi(redisPortStr)
 	if err != nil {
 		errors = append(errors, err)
 	}
-	mongoHost := os.Getenv("MONGO_HOST")
+	mongoHost := os.Getenv(en.MongoHost)
 	mongoIPs, err := net.LookupIP(mongoHost)
 	if err != nil {
 		errors = append(errors, err)
@@ -73,7 +90,7 @@ func GetConnectionParams() (*ConnectionParams, []error) {
 			errors = append(errors, InvalidHostError{host: redisHost})
 		}
 	}
-	mongoPortStr := os.Getenv("MONGO_PORT")
+	mongoPortStr := os.Getenv(en.MongoPort)
 	mongoPort, err := strconv.Atoi(mongoPortStr)
 	if err != nil {
 		errors = append(errors, err)

@@ -1,6 +1,10 @@
 package user
 
-import "github.com/markelca/toggles/pkg/security"
+import (
+	"encoding/json"
+
+	"github.com/markelca/toggles/pkg/security"
+)
 
 type User struct {
 	UserName  string
@@ -26,6 +30,22 @@ func NewUser(userName, role, password string) (*User, error) {
 		Password: pwdHash,
 		ApiKey:   apiKey,
 	}, nil
+}
+
+func (u User) String() string {
+	jsonBody, error := json.Marshal(u)
+	if error != nil {
+		return "{UserName: " + u.UserName + ", Role: " + u.Role + " Password: " + u.Password + " ApiKey: " + u.ApiKey + "}"
+	}
+	return string(jsonBody)
+}
+
+func (u User) ToPrettyStr() string {
+	jsonBody, error := json.MarshalIndent(u, "", "\t")
+	if error != nil {
+		return "{\n\tUserName: " + u.UserName + ",\n\t Role: " + u.Role + ",\n\t Password: " + u.Password + ",\n\t ApiKey: " + u.ApiKey + "\n\t}"
+	}
+	return string(jsonBody)
 }
 
 // //////////

@@ -22,7 +22,13 @@ var userRepo user.UserRepository
 
 func init() {
 	var paramErr []error
-	params, paramErr = envs.GetConnectionParams()
+	params, paramErr = envs.GetConnectionParams(envs.EnvNames{
+		AppPort:   "APP_PORT",
+		RedisHost: "REDIS_HOST",
+		RedisPort: "REDIS_PORT",
+		MongoHost: "MONGO_HOST",
+		MongoPort: "MONGO_PORT",
+	})
 	if len(paramErr) > 0 {
 		envs.PrintFatalErrors(paramErr)
 	}
@@ -38,24 +44,6 @@ func init() {
 	userRepo, err = user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
-	}
-
-	adminUser, err := user.NewUser("admin", "admin", "admin")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = userRepo.Upsert(*adminUser)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	testUser, err := user.NewUser("test", "user", "test")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = userRepo.Upsert(*testUser)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 }
