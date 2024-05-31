@@ -1,7 +1,7 @@
 # cli
 A cli tool to interact with the toggles api.
 ## Usage
-```bash
+```
 $ ./bin/tg -h
 This tool offers utilities to interact with the togggles API.
 
@@ -20,7 +20,7 @@ Flags:
 Use "tg [command] --help" for more information about a command.
 ```
 
-```bash
+```
 $ ./bin/tg db get users
 {
 	"UserName": "admin",
