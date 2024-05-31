@@ -118,9 +118,10 @@ func meHandler(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
 	u, _ := c.Get(identityKey)
 	c.JSON(200, gin.H{
-		"userID":   claims[identityKey],
-		"userName": u.(*user.User).UserName,
-		"role":     u.(*user.User).Role,
+		"userID":      claims[identityKey],
+		"userName":    u.(*user.User).UserName,
+		"apiKey":      u.(*user.User).ApiKey,
+		"permissions": u.(*user.User).Permissions,
 	})
 }
 func RouteName(name string) gin.HandlerFunc {

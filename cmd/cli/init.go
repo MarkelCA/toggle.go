@@ -21,7 +21,7 @@ var initCmd = &cobra.Command{
 
 func initDatabase() {
 	adminPermissions := []string{"get_flags", "create_flags", "update_flags", "delete_flags", "get_users", "create_users", "update_users", "delete_users", "get_me"}
-	adminUser, err := user.NewUser("admin", "admin", "admin", adminPermissions)
+	adminUser, err := user.NewUser("admin", "admin", adminPermissions)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func initDatabase() {
 	}
 
 	userPermissions := []string{"get_flags", "get_flag", "get_me"}
-	testUser, err := user.NewUser("test", "user", "test", userPermissions)
+	testUser, err := user.NewUser("test", "test", userPermissions)
 	if err != nil {
 		log.Fatal(err)
 	}

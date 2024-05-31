@@ -10,13 +10,12 @@ type User struct {
 	UserName    string
 	FirstName   string
 	LastName    string
-	Role        string
 	Password    string
 	ApiKey      string
 	Permissions []string
 }
 
-func NewUser(userName, role, password string, permissions []string) (*User, error) {
+func NewUser(userName, password string, permissions []string) (*User, error) {
 	pwdHash, err := security.HashPassword(password)
 	if err != nil {
 		return nil, err
@@ -27,7 +26,6 @@ func NewUser(userName, role, password string, permissions []string) (*User, erro
 	}
 	return &User{
 		UserName:    userName,
-		Role:        role,
 		Password:    pwdHash,
 		ApiKey:      apiKey,
 		Permissions: permissions,
@@ -37,7 +35,7 @@ func NewUser(userName, role, password string, permissions []string) (*User, erro
 func (u User) String() string {
 	jsonBody, error := json.Marshal(u)
 	if error != nil {
-		return "{UserName: " + u.UserName + ", Role: " + u.Role + " Password: " + u.Password + " ApiKey: " + u.ApiKey + "}"
+		return "{UserName: " + u.UserName + " Password: " + u.Password + " ApiKey: " + u.ApiKey + "}"
 	}
 	return string(jsonBody)
 }
@@ -45,7 +43,7 @@ func (u User) String() string {
 func (u User) ToPrettyStr() string {
 	jsonBody, error := json.MarshalIndent(u, "", "\t")
 	if error != nil {
-		return "{\n\tUserName: " + u.UserName + ",\n\t Role: " + u.Role + ",\n\t Password: " + u.Password + ",\n\t ApiKey: " + u.ApiKey + "\n\t}"
+		return "{\n\tUserName: " + u.UserName + ",\n\t Password: " + u.Password + ",\n\t ApiKey: " + u.ApiKey + "\n\t}"
 	}
 	return string(jsonBody)
 }
