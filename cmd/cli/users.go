@@ -104,6 +104,7 @@ var userPermissionAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		fmt.Println("Permission added")
 	},
 }
 
@@ -122,5 +123,6 @@ var userPermissionRemoveCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		fmt.Println("Permission removed")
 	},
 }

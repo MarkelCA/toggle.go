@@ -90,8 +90,8 @@ var flagsCreateCmd = &cobra.Command{
 }
 
 var flagsDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Deletes a flag",
+	Use:   "rm",
+	Short: "Removes a flag",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			fmt.Println("Invalid number of arguments, expected 1 (name)")

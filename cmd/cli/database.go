@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/markelca/toggles/pkg/user"
@@ -46,5 +47,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("Database initialized")
 	},
 }
