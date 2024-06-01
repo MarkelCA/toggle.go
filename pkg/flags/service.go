@@ -7,7 +7,10 @@ import (
 	"github.com/markelca/toggles/pkg/storage"
 )
 
-const DEFAULT_EXPIRATION_TIME = 5 * time.Minute
+const (
+	DEFAULT_EXPIRATION_TIME = 5 * time.Minute
+	redisKeyPrefix          = "flag:"
+)
 
 type FlagService interface {
 	Get(key string) (bool, error)
@@ -28,17 +31,17 @@ func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) 
 }
 
 func (flagService DefaultFlagService) Get(key string) (bool, error) {
-	cachedResult, err := flagService.cacheClient.Get(key)
+	cachedResult, err := flagService.cacheClient.Get(redisKeyPrefix + key)
 	if err == nil {
 		// We update the TTL on every successfull key access
-		err = flagService.cacheClient.Expire(key, DEFAULT_EXPIRATION_TIME)
+		err = flagService.cacheClient.Expire(redisKeyPrefix+key, DEFAULT_EXPIRATION_TIME)
 		if err != nil {
 			return false, nil
 		}
 	} else if err == storage.Nil {
 		value, err := flagService.repository.Get(key)
 		if err == nil {
-			flagService.cacheClient.Set(key, value, DEFAULT_EXPIRATION_TIME)
+			flagService.cacheClient.Set(redisKeyPrefix+key, value, DEFAULT_EXPIRATION_TIME)
 		}
 		return value, err
 	} else if err != nil {
@@ -79,7 +82,7 @@ func (flagService DefaultFlagService) Update(name string, value bool) error {
 	if err != nil {
 		return err
 	} else {
-		err = flagService.cacheClient.Delete(name)
+		err = flagService.cacheClient.Delete(redisKeyPrefix + name)
 		return err
 	}
 }
@@ -105,7 +108,7 @@ func (flagService DefaultFlagService) Delete(name string) error {
 	if err := flagService.repository.Delete(name); err != nil {
 		return err
 	}
-	if err := flagService.cacheClient.Delete(name); err != nil {
+	if err := flagService.cacheClient.Delete(redisKeyPrefix + name); err != nil {
 		return err
 	}
 	return nil
