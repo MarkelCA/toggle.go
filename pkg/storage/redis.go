@@ -45,6 +45,16 @@ func (r RedisClient) Expire(key string, expiration time.Duration) error {
 	return r.client.Expire(ctx, key, expiration).Err()
 }
 
+func (r RedisClient) GetList(key string) ([]string, error) {
+	return r.client.LRange(ctx, key, 0, -1).Result()
+}
+
+func (r RedisClient) AppendToList(key string, expiration time.Duration, values ...any) error {
+	err := r.client.LPush(ctx, key, values).Err()
+	r.client.Expire(ctx, key, expiration).Err()
+	return err
+}
+
 func (r RedisClient) Set(key string, value any, expiration time.Duration) error {
 	return r.client.Set(ctx, key, value, expiration).Err()
 }

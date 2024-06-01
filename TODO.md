@@ -1,6 +1,6 @@
 # TODO
- -[ ] Implement crud operations in the cli
-    - [ ] user
-    - [ ] flag
+ -[X] Implement crud operations in the cli
+    - [X] user
+    - [X] flag
 - [ ] Cache user service
 - [ ] Secure websocket connection

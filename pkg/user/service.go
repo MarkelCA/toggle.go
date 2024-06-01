@@ -5,6 +5,11 @@ import (
 	"github.com/markelca/toggles/pkg/storage"
 )
 
+const (
+	redisKeyPrefix            = "user:"
+	redisKeyPrefixPermissions = "user:permissions:"
+)
+
 type UserService interface {
 	FindAll() ([]*User, error)
 	FindByUserName(userName string) (*User, error)
@@ -48,7 +53,36 @@ func (service DefaultUserService) Upsert(user User) error {
 }
 
 func (service DefaultUserService) GetPermissions(userName string) ([]string, error) {
-	return service.repository.GetPermissions(userName)
+	exists, err := service.cacheClient.Exists(redisKeyPrefixPermissions + userName)
+	var permissions []string
+	if exists {
+		permissions, err = service.cacheClient.GetList(redisKeyPrefixPermissions + userName)
+		// We update the TTL on every successfull key access
+		err = service.cacheClient.Expire(redisKeyPrefixPermissions+userName, storage.DEFAULT_EXPIRATION_TIME)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		permissions, err = service.repository.GetPermissions(userName)
+		if err != nil {
+			return nil, err
+		}
+
+		// We parse the permissions from []string to []any to fit the function signature
+		parsedPermissions := make([]interface{}, len(permissions))
+		for i, v := range permissions {
+			parsedPermissions[i] = v
+		}
+
+		// We store the permissions in cache
+		err = service.cacheClient.AppendToList(redisKeyPrefixPermissions+userName, storage.DEFAULT_EXPIRATION_TIME, parsedPermissions...)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return permissions, nil
 }
 
 // NOTE: This should be cached
@@ -70,11 +104,11 @@ func (service DefaultUserService) Authenticate(userName, password, apiKey string
 
 // NOTE: This query should be cached
 func (service DefaultUserService) HasPermission(userName, permission string) bool {
-	user, err := service.repository.FindByUserName(userName)
+	permissions, err := service.GetPermissions(userName)
 	if err != nil {
 		return false
 	}
-	for _, p := range user.Permissions {
+	for _, p := range permissions {
 		if p == permission {
 			return true
 		}

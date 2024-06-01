@@ -2,14 +2,12 @@ package flags
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/markelca/toggles/pkg/storage"
 )
 
 const (
-	DEFAULT_EXPIRATION_TIME = 5 * time.Minute
-	redisKeyPrefix          = "flag:"
+	redisKeyPrefix = "flag:"
 )
 
 type FlagService interface {
@@ -34,14 +32,14 @@ func (flagService DefaultFlagService) Get(key string) (bool, error) {
 	cachedResult, err := flagService.cacheClient.Get(redisKeyPrefix + key)
 	if err == nil {
 		// We update the TTL on every successfull key access
-		err = flagService.cacheClient.Expire(redisKeyPrefix+key, DEFAULT_EXPIRATION_TIME)
+		err = flagService.cacheClient.Expire(redisKeyPrefix+key, storage.DEFAULT_EXPIRATION_TIME)
 		if err != nil {
 			return false, nil
 		}
 	} else if err == storage.Nil {
 		value, err := flagService.repository.Get(key)
 		if err == nil {
-			flagService.cacheClient.Set(redisKeyPrefix+key, value, DEFAULT_EXPIRATION_TIME)
+			flagService.cacheClient.Set(redisKeyPrefix+key, value, storage.DEFAULT_EXPIRATION_TIME)
 		}
 		return value, err
 	} else if err != nil {
