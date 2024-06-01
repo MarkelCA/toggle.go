@@ -11,6 +11,8 @@ func init() {
 	usersGetCmd.PersistentFlags().BoolP("pretty", "p", false, "Pretty print")
 	usersCmd.AddCommand(usersGetCmd)
 	permissionsCmd.AddCommand(userPermissionsGetCmd)
+	permissionsCmd.AddCommand(userPermissionAddCmd)
+	permissionsCmd.AddCommand(userPermissionRemoveCmd)
 	usersCmd.AddCommand(permissionsCmd)
 	rootCmd.AddCommand(usersCmd)
 }
@@ -34,7 +36,7 @@ var userPermissionsGetCmd = &cobra.Command{
 			return
 		}
 		username := args[0]
-		permissions, err := userRepo.GetPermissions(username)
+		permissions, err := userService.GetPermissions(username)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -57,7 +59,7 @@ var usersGetCmd = &cobra.Command{
 		}
 
 		if len(args) == 1 {
-			user, err := userRepo.FindByUserName(args[0])
+			user, err := userService.FindByUserName(args[0])
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -69,7 +71,7 @@ var usersGetCmd = &cobra.Command{
 			}
 
 		} else {
-			users, err := userRepo.FindAll()
+			users, err := userService.FindAll()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -84,5 +86,41 @@ var usersGetCmd = &cobra.Command{
 			}
 		}
 
+	},
+}
+
+var userPermissionAddCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Adds a permission to a user",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			fmt.Println("Invalid number of arguments, expected 2 (username, permission)")
+			os.Exit(1)
+		}
+		username := args[0]
+		permission := args[1]
+		err := userService.AddPermission(username, permission)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	},
+}
+
+var userPermissionRemoveCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "Removes a permission from a user",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			fmt.Println("Invalid number of arguments, expected 2 (username, permission)")
+			os.Exit(1)
+		}
+		username := args[0]
+		permission := args[1]
+		err := userService.RemovePermission(username, permission)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	},
 }

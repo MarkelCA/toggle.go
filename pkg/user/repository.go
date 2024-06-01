@@ -18,6 +18,8 @@ type UserRepository interface {
 	Update(user *User) error
 	Upsert(user User) error
 	GetPermissions(userName string) ([]string, error)
+	AddPermission(userName, permission string) error
+	RemovePermission(userName, permission string) error
 }
 
 type UserMongoRepository struct {
@@ -91,4 +93,14 @@ func (repository UserMongoRepository) GetPermissions(userName string) ([]string,
 	}
 
 	return u.Permissions, nil
+}
+
+func (repository UserMongoRepository) AddPermission(userName, permission string) error {
+	_, err := repository.collection.UpdateOne(ctx, bson.D{{Key: "username", Value: userName}}, bson.D{{Key: "$push", Value: bson.D{{Key: "permissions", Value: permission}}}})
+	return err
+}
+
+func (repository UserMongoRepository) RemovePermission(userName, permission string) error {
+	_, err := repository.collection.UpdateOne(ctx, bson.D{{Key: "username", Value: userName}}, bson.D{{Key: "$pull", Value: bson.D{{Key: "permissions", Value: permission}}}})
+	return err
 }

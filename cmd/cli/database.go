@@ -32,7 +32,7 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = userRepo.Upsert(*adminUser)
+		err = userService.Upsert(*adminUser)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -42,7 +42,7 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = userRepo.Upsert(*testUser)
+		err = userService.Upsert(*testUser)
 		if err != nil {
 			log.Fatal(err)
 		}

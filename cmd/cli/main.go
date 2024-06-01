@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 	Long:  `This tool offers utilities to interact with the togggles API.`,
 }
 
-var userRepo user.UserRepository
+var userService user.UserService
 var flagService flags.FlagService
 var params *envs.ConnectionParams
 
@@ -42,10 +42,12 @@ func init() {
 		envs.PrintFatalErrors(paramErr)
 	}
 
-	userRepo, err = user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
+	userRepo, err := user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
+
+	userService = user.NewUserService(userRepo, storage.NewRedisClient(params.RedisHost, params.RedisPort))
 
 	db, err := flags.NewFlagMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {

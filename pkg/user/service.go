@@ -14,6 +14,8 @@ type UserService interface {
 	Authenticate(userName, password, apiKey string) (*User, error)
 	HasPermission(userName, permission string) bool
 	GetPermissions(userName string) ([]string, error)
+	AddPermission(userName, permission string) error
+	RemovePermission(userName, permission string) error
 }
 
 type DefaultUserService struct {
@@ -78,4 +80,14 @@ func (service DefaultUserService) HasPermission(userName, permission string) boo
 		}
 	}
 	return false
+}
+
+// NOTE: This should update permission caches
+func (service DefaultUserService) AddPermission(userName, permission string) error {
+	return service.repository.AddPermission(userName, permission)
+}
+
+// NOTE: This should update permission caches
+func (service DefaultUserService) RemovePermission(userName, permission string) error {
+	return service.repository.RemovePermission(userName, permission)
 }
