@@ -30,6 +30,14 @@ func (f Flag) String() string {
 	return string(jsonBody)
 }
 
+func (f Flag) ToPrettyString() string {
+	jsonBody, err := json.MarshalIndent(f, "", "  ")
+	if err != nil {
+		return "{\n  Name: " + f.Name + ",\n  Value: " + strconv.FormatBool(f.Value) + "\n}"
+	}
+	return string(jsonBody)
+}
+
 // //////////
 // Errors
 // //////////

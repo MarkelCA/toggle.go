@@ -52,15 +52,11 @@ func init() {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
 
-	flagsCmd.AddCommand(flagsGetCmd)
 	repository := storage.NewRedisClient(params.RedisHost, params.RedisPort)
 	flagService = flags.NewFlagService(repository, db)
 }
 
 func main() {
-	rootCmd.AddCommand(databaseCmd)
-	rootCmd.AddCommand(flagsCmd)
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
