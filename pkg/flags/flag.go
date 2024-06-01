@@ -2,6 +2,7 @@ package flags
 
 import (
 	"encoding/json"
+	"strconv"
 )
 
 type Flag struct {
@@ -19,6 +20,14 @@ func ParseFlag(data any) (*Flag, error) {
 		return nil, err
 	}
 	return &flag, nil
+}
+
+func (f Flag) String() string {
+	jsonBody, err := json.Marshal(f)
+	if err != nil {
+		return "{Name: " + f.Name + ", Value: " + strconv.FormatBool(f.Value) + "}"
+	}
+	return string(jsonBody)
 }
 
 // //////////

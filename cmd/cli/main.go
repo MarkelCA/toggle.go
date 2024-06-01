@@ -7,6 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/markelca/toggles/internal/envs"
+	"github.com/markelca/toggles/pkg/flags"
+	"github.com/markelca/toggles/pkg/storage"
 	"github.com/markelca/toggles/pkg/user"
 	"github.com/spf13/cobra"
 )
@@ -17,14 +19,8 @@ var rootCmd = &cobra.Command{
 	Long:  `This tool offers utilities to interact with the togggles API.`,
 }
 
-var databaseCmd = &cobra.Command{
-	Use:     "db",
-	Short:   "Database utilities",
-	Aliases: []string{"database"},
-	Args:    cobra.ExactArgs(1),
-}
-
 var userRepo user.UserRepository
+var flagService flags.FlagService
 var params *envs.ConnectionParams
 
 func init() {
@@ -41,6 +37,7 @@ func init() {
 		MongoHost: "CLI_MONGO_HOST",
 		MongoPort: "CLI_MONGO_PORT",
 	})
+
 	if len(paramErr) > 0 {
 		envs.PrintFatalErrors(paramErr)
 	}
@@ -49,15 +46,20 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
+
+	db, err := flags.NewFlagMongoRepository(params.MongoHost, params.MongoPort)
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
+	}
+
+	flagsCmd.AddCommand(flagsGetCmd)
+	repository := storage.NewRedisClient(params.RedisHost, params.RedisPort)
+	flagService = flags.NewFlagService(repository, db)
 }
 
 func main() {
-	getCmd.AddCommand(usersCmd)
-	getCmd.AddCommand(permissionsCmd)
-	databaseCmd.AddCommand(getCmd)
-	databaseCmd.AddCommand(initCmd)
-
 	rootCmd.AddCommand(databaseCmd)
+	rootCmd.AddCommand(flagsCmd)
 
 	err := rootCmd.Execute()
 	if err != nil {
