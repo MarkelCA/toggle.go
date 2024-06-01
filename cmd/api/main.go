@@ -18,7 +18,9 @@ import (
 var startTime time.Time // Used to calculate uptime
 var users map[string]user.User
 var params *envs.ConnectionParams
-var userRepo user.UserRepository
+
+// var userRepo user.UserRepository
+var userService user.UserService
 
 func init() {
 	var paramErr []error
@@ -40,11 +42,12 @@ func init() {
 		port = "3000"
 	}
 
-	var err error
-	userRepo, err = user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
+	userRepo, err := user.NewUserMongoRepository(params.MongoHost, params.MongoPort)
 	if err != nil {
 		panic(fmt.Sprintf("Error connecting to MongoDB: %v", err))
 	}
+
+	userService = user.NewUserService(userRepo, storage.NewRedisClient(params.RedisHost, params.RedisPort))
 
 }
 func uptime() time.Duration {
@@ -54,7 +57,7 @@ func uptime() time.Duration {
 func main() {
 	engine := gin.Default()
 	// the jwt middleware
-	authMiddleware, err := jwt.New(newAuthMiddleware(userRepo))
+	authMiddleware, err := jwt.New(newAuthMiddleware(userService))
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}

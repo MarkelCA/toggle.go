@@ -30,7 +30,7 @@ func handlerMiddleWare(authMiddleware *jwt.GinJWTMiddleware) gin.HandlerFunc {
 	}
 }
 
-func newAuthMiddleware(userRepo user.UserRepository) *jwt.GinJWTMiddleware {
+func newAuthMiddleware(service user.UserService) *jwt.GinJWTMiddleware {
 
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test zone",
@@ -40,9 +40,9 @@ func newAuthMiddleware(userRepo user.UserRepository) *jwt.GinJWTMiddleware {
 		IdentityKey: identityKey,
 		PayloadFunc: payloadFunc(),
 
-		IdentityHandler: identityHandler(userRepo),
-		Authenticator:   authenticator(userRepo),
-		Authorizator:    authorizator(userRepo),
+		IdentityHandler: identityHandler(service),
+		Authenticator:   authenticator(service),
+		Authorizator:    authorizator(service),
 		Unauthorized:    unauthorized(),
 		TokenLookup:     "header: Authorization, query: token, cookie: jwt",
 		// TokenLookup: "query:token",
@@ -63,12 +63,12 @@ func payloadFunc() func(data any) jwt.MapClaims {
 	}
 }
 
-func identityHandler(user.UserRepository) func(c *gin.Context) any {
+func identityHandler(service user.UserService) func(c *gin.Context) any {
 	return func(c *gin.Context) any {
 		claims := jwt.ExtractClaims(c)
 
 		username := claims[identityKey].(string)
-		mongoUser, err := userRepo.FindByUserName(username)
+		mongoUser, err := service.FindByUserName(username)
 
 		if err != nil {
 			return nil
@@ -78,7 +78,7 @@ func identityHandler(user.UserRepository) func(c *gin.Context) any {
 	}
 }
 
-func authenticator(repository user.UserRepository) func(c *gin.Context) (any, error) {
+func authenticator(service user.UserService) func(c *gin.Context) (any, error) {
 	return func(c *gin.Context) (any, error) {
 		apiKey := c.GetHeader("X-Api-Key")
 
@@ -89,7 +89,7 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 		userID := loginVals.Username
 		password := loginVals.Password
 
-		u, err := repository.Authenticate(userID, password, apiKey)
+		u, err := service.Authenticate(userID, password, apiKey)
 		if err != nil {
 			if err == user.ErrUserAuthenticationFailed {
 				return nil, jwt.ErrFailedAuthentication
@@ -101,7 +101,7 @@ func authenticator(repository user.UserRepository) func(c *gin.Context) (any, er
 	}
 }
 
-func authorizator(userRepo user.UserRepository) func(data any, c *gin.Context) bool {
+func authorizator(service user.UserService) func(data any, c *gin.Context) bool {
 	return func(data any, c *gin.Context) bool {
 		routeName, ok := c.Get("routeName")
 		if !ok {
@@ -110,7 +110,7 @@ func authorizator(userRepo user.UserRepository) func(data any, c *gin.Context) b
 		}
 		apiKey := c.GetHeader("X-Api-Key")
 		u, ok := data.(*user.User)
-		if ok && u.ApiKey == apiKey && userRepo.HasPermission(u.UserName, routeName.(string)) {
+		if ok && u.ApiKey == apiKey && service.HasPermission(u.UserName, routeName.(string)) {
 			return true
 		}
 		return false
