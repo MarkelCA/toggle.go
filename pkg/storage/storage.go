@@ -17,6 +17,7 @@ type CacheClient interface {
 	Expire(key string, expiration time.Duration) error
 	GetList(key string) ([]string, error)
 	AppendToList(key string, expiration time.Duration, values ...any) error
+	RemoveFromList(key string, values ...any) error
 }
 
 type KeyValueDBClient interface {

@@ -85,7 +85,6 @@ func (service DefaultUserService) GetPermissions(userName string) ([]string, err
 	return permissions, nil
 }
 
-// NOTE: This should be cached
 func (service DefaultUserService) Authenticate(userName, password, apiKey string) (*User, error) {
 	user, err := service.repository.FindByUserName(userName)
 	if err != nil {
@@ -102,7 +101,6 @@ func (service DefaultUserService) Authenticate(userName, password, apiKey string
 	return user, nil
 }
 
-// NOTE: This query should be cached
 func (service DefaultUserService) HasPermission(userName, permission string) bool {
 	permissions, err := service.GetPermissions(userName)
 	if err != nil {
@@ -116,12 +114,19 @@ func (service DefaultUserService) HasPermission(userName, permission string) boo
 	return false
 }
 
-// NOTE: This should update permission caches
 func (service DefaultUserService) AddPermission(userName, permission string) error {
-	return service.repository.AddPermission(userName, permission)
+	err := service.repository.AddPermission(userName, permission)
+	if err != nil {
+		return err
+	}
+	key := redisKeyPrefixPermissions + userName
+	return service.cacheClient.AppendToList(key, storage.DEFAULT_EXPIRATION_TIME, permission)
 }
 
-// NOTE: This should update permission caches
 func (service DefaultUserService) RemovePermission(userName, permission string) error {
-	return service.repository.RemovePermission(userName, permission)
+	err := service.repository.RemovePermission(userName, permission)
+	if err != nil {
+		return err
+	}
+	return service.cacheClient.RemoveFromList(redisKeyPrefixPermissions+userName, permission)
 }

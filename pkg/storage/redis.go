@@ -55,6 +55,16 @@ func (r RedisClient) AppendToList(key string, expiration time.Duration, values .
 	return err
 }
 
+func (r RedisClient) RemoveFromList(key string, values ...any) error {
+	for _, value := range values {
+		err := r.client.LRem(ctx, key, 0, value).Err()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r RedisClient) Set(key string, value any, expiration time.Duration) error {
 	return r.client.Set(ctx, key, value, expiration).Err()
 }
