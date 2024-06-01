@@ -53,6 +53,7 @@ func init() {
 
 func main() {
 	getCmd.AddCommand(usersCmd)
+	getCmd.AddCommand(permissionsCmd)
 	databaseCmd.AddCommand(getCmd)
 	databaseCmd.AddCommand(initCmd)
 

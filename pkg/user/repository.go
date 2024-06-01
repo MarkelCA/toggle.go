@@ -20,6 +20,7 @@ type UserRepository interface {
 	Upsert(user User) error
 	Authenticate(userName, password, apiKey string) (*User, error)
 	HasPermission(userName, permission string) bool
+	GetPermissions(userName string) ([]string, error)
 }
 
 type UserMongoRepository struct {
@@ -111,4 +112,17 @@ func (repository UserMongoRepository) HasPermission(userName, permission string)
 		}
 	}
 	return false
+}
+
+func (repository UserMongoRepository) GetPermissions(userName string) ([]string, error) {
+	opts := options.FindOne().SetProjection(bson.D{{Key: "permissions", Value: 1}})
+	permissions := repository.collection.FindOne(ctx, bson.D{{Key: "username", Value: userName}}, opts)
+
+	var u User
+	err := permissions.Decode(&u)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.Permissions, nil
 }

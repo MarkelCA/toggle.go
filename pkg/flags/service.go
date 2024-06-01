@@ -9,16 +9,25 @@ import (
 
 const DEFAULT_EXPIRATION_TIME = 5 * time.Minute
 
-type FlagService struct {
+type FlagService interface {
+	Get(key string) (bool, error)
+	Create(f Flag) error
+	Update(name string, value bool) error
+	Exists(key string) (bool, error)
+	List() ([]Flag, error)
+	Delete(name string) error
+}
+
+type DefaultFlagService struct {
 	repository  FlagRepository
 	cacheClient storage.CacheClient
 }
 
 func NewFlagService(cacheClient storage.CacheClient, repository FlagRepository) FlagService {
-	return FlagService{repository, cacheClient}
+	return DefaultFlagService{repository, cacheClient}
 }
 
-func (flagService FlagService) Get(key string) (bool, error) {
+func (flagService DefaultFlagService) Get(key string) (bool, error) {
 	cachedResult, err := flagService.cacheClient.Get(key)
 	if err == nil {
 		// We update the TTL on every successfull key access
@@ -43,7 +52,7 @@ func (flagService FlagService) Get(key string) (bool, error) {
 	return result, nil
 }
 
-func (flagService FlagService) Create(f Flag) error {
+func (flagService DefaultFlagService) Create(f Flag) error {
 	exists, err := flagService.Exists(f.Name)
 	if err != nil {
 		return err
@@ -59,7 +68,7 @@ func (flagService FlagService) Create(f Flag) error {
 	return nil
 }
 
-func (flagService FlagService) Update(name string, value bool) error {
+func (flagService DefaultFlagService) Update(name string, value bool) error {
 	exists, err := flagService.Exists(name)
 	if err != nil {
 		return err
@@ -75,11 +84,11 @@ func (flagService FlagService) Update(name string, value bool) error {
 	}
 }
 
-func (flagService FlagService) Exists(key string) (bool, error) {
+func (flagService DefaultFlagService) Exists(key string) (bool, error) {
 	return flagService.repository.Exists(key)
 }
 
-func (flagService FlagService) List() ([]Flag, error) {
+func (flagService DefaultFlagService) List() ([]Flag, error) {
 	flags, err := flagService.repository.List()
 	if err != nil {
 		return nil, err
@@ -87,7 +96,7 @@ func (flagService FlagService) List() ([]Flag, error) {
 	return flags, nil
 }
 
-func (flagService FlagService) Delete(name string) error {
+func (flagService DefaultFlagService) Delete(name string) error {
 	if exists, err := flagService.Exists(name); err != nil {
 		return err
 	} else if !exists {

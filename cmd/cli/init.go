@@ -14,13 +14,12 @@ var initCmd = &cobra.Command{
 	Aliases: []string{"i"},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Initializing database:")
-		// NOTE: WIP, not working yet (envs missing)
 		initDatabase()
 	},
 }
 
 func initDatabase() {
-	adminPermissions := []string{"get_flags", "create_flags", "update_flags", "delete_flags", "get_users", "create_users", "update_users", "delete_users", "get_me"}
+	adminPermissions := []string{"get_flags", "create_flag", "update_flag", "delete_flag", "get_users", "create_users", "update_users", "delete_users", "get_me"}
 	adminUser, err := user.NewUser("admin", "admin", adminPermissions)
 	if err != nil {
 		log.Fatal(err)
